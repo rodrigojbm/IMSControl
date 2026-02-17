@@ -1,0 +1,58 @@
+{
+  "name": "Production",
+  "type": "object",
+  "properties": {
+    "product_id": {
+      "type": "string",
+      "description": "ID do produto produzido"
+    },
+    "product_name": {
+      "type": "string",
+      "description": "Nome do produto"
+    },
+    "quantity": {
+      "type": "number",
+      "description": "Quantidade produzida"
+    },
+    "production_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Data da produção"
+    },
+    "supplies_used": {
+      "type": "array",
+      "description": "Insumos utilizados",
+      "items": {
+        "type": "object",
+        "properties": {
+          "supply_id": {
+            "type": "string"
+          },
+          "supply_name": {
+            "type": "string"
+          },
+          "quantity_used": {
+            "type": "number"
+          },
+          "unit": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "total_cost": {
+      "type": "number",
+      "description": "Custo total da produção"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Observações"
+    }
+  },
+  "required": [
+    "product_id",
+    "product_name",
+    "quantity",
+    "production_date"
+  ]
+}

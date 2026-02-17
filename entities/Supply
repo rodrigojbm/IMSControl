@@ -1,0 +1,61 @@
+{
+  "name": "Supply",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Nome do insumo"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "cera",
+        "essencia",
+        "pavio",
+        "pote",
+        "corante",
+        "embalagem",
+        "outros"
+      ],
+      "description": "Categoria do insumo"
+    },
+    "unit": {
+      "type": "string",
+      "enum": [
+        "kg",
+        "g",
+        "ml",
+        "L",
+        "un",
+        "m"
+      ],
+      "description": "Unidade de medida"
+    },
+    "quantity": {
+      "type": "number",
+      "description": "Quantidade em estoque"
+    },
+    "min_quantity": {
+      "type": "number",
+      "description": "Quantidade m\u00ednima para alerta"
+    },
+    "cost_per_unit": {
+      "type": "number",
+      "description": "Custo por unidade"
+    },
+    "supplier": {
+      "type": "string",
+      "description": "Fornecedor"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Observa\u00e7\u00f5es"
+    }
+  },
+  "required": [
+    "name",
+    "category",
+    "unit",
+    "quantity"
+  ]
+}
