@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { base44 } from "@/api/base44Client";
+import { suppliesApi, productsApi, movementsApi, productionsApi } from "@/api/apiClient";
 import { Package, Boxes, Factory, TrendingUp } from "lucide-react";
 import StatsCard from "@/components/dashboard/StatsCard";
 import LowStockAlert from "@/components/dashboard/LowStockAlert";
@@ -9,36 +9,36 @@ import FinancialReport from "@/components/dashboard/FinancialReport";
 export default function Dashboard() {
   const { data: supplies = [] } = useQuery({
     queryKey: ["supplies"],
-    queryFn: () => base44.entities.Supply.list()
+    queryFn: () => suppliesApi.list()
   });
 
   const { data: products = [] } = useQuery({
     queryKey: ["products"],
-    queryFn: () => base44.entities.Product.list()
+    queryFn: () => productsApi.list()
   });
 
   const { data: movements = [] } = useQuery({
     queryKey: ["movements"],
-    queryFn: () => base44.entities.StockMovement.list("-movement_date")
+    queryFn: () => movementsApi.list("-movementDate")
   });
 
   const { data: recentMovements = [] } = useQuery({
     queryKey: ["recentMovements"],
-    queryFn: () => base44.entities.StockMovement.list("-movement_date", 10)
+    queryFn: () => movementsApi.list("-movementDate", 10)
   });
 
   const { data: productions = [] } = useQuery({
     queryKey: ["productions"],
-    queryFn: () => base44.entities.Production.list("-production_date", 30)
+    queryFn: () => productionsApi.list("-production_date", 30)
   });
 
   // Calculate stats
-  const totalSupplyValue = supplies.reduce((acc, s) => acc + (s.quantity * (s.cost_per_unit || 0)), 0);
-  const totalProductValue = products.reduce((acc, p) => acc + (p.quantity * (p.sale_price || 0)), 0);
+  const totalSupplyValue = supplies.reduce((acc, s) => acc + (s.quantity * (s.costPerUnit || 0)), 0);
+  const totalProductValue = products.reduce((acc, p) => acc + (p.quantity * (p.salePrice || 0)), 0);
   const totalProduced = productions.reduce((acc, p) => acc + p.quantity, 0);
 
-  const lowStockSupplies = supplies.filter(s => s.min_quantity && s.quantity <= s.min_quantity);
-  const lowStockProducts = products.filter(p => p.min_quantity && p.quantity <= p.min_quantity);
+  const lowStockSupplies = supplies.filter(s => s.minQuantity && s.quantity <= s.minQuantity);
+  const lowStockProducts = products.filter(p => p.minQuantity && p.quantity <= p.minQuantity);
 
   return (
     <div className="min-h-screen bg-stone-50 p-4 md:p-8">

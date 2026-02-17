@@ -31,8 +31,8 @@ export default function SupplyForm({ supply, onSubmit, onCancel, isLoading }) {
     category: supply?.category || "",
     unit: supply?.unit || "",
     quantity: supply?.quantity || 0,
-    min_quantity: supply?.min_quantity || 0,
-    cost_per_unit: supply?.cost_per_unit || 0,
+    minQuantity: supply?.minQuantity || 0,
+    costPerUnit: supply?.costPerUnit || 0,
     supplier: supply?.supplier || "",
     notes: supply?.notes || ""
   });
@@ -118,26 +118,26 @@ export default function SupplyForm({ supply, onSubmit, onCancel, isLoading }) {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="min_quantity">Quantidade Mínima</Label>
+          <Label htmlFor="minQuantity">Quantidade Mínima</Label>
           <Input
-            id="min_quantity"
+            id="minQuantity"
             type="number"
             step="0.01"
             min="0"
-            value={formData.min_quantity}
-            onChange={(e) => setFormData({ ...formData, min_quantity: parseFloat(e.target.value) || 0 })}
+            value={formData.minQuantity}
+            onChange={(e) => setFormData({ ...formData, minQuantity: parseFloat(e.target.value) || 0 })}
           />
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="cost_per_unit">Custo por Unidade (R$)</Label>
+          <Label htmlFor="costPerUnit">Custo por Unidade (R$)</Label>
           <Input
-            id="cost_per_unit"
+            id="costPerUnit"
             type="number"
             step="0.01"
             min="0"
-            value={formData.cost_per_unit}
-            onChange={(e) => setFormData({ ...formData, cost_per_unit: parseFloat(e.target.value) || 0 })}
+            value={formData.costPerUnit}
+            onChange={(e) => setFormData({ ...formData, costPerUnit: parseFloat(e.target.value) || 0 })}
           />
         </div>
 

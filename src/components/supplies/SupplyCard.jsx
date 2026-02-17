@@ -30,7 +30,7 @@ const categoryColors = {
 };
 
 export default function SupplyCard({ supply, onEdit, onDelete, onAddStock, onRemoveStock }) {
-  const isLowStock = supply.min_quantity && supply.quantity <= supply.min_quantity;
+  const isLowStock = supply.minQuantity && supply.quantity <= supply.minQuantity;
 
   return (
     <Card className="p-4 border-0 shadow-sm bg-white hover:shadow-md transition-shadow">
@@ -71,9 +71,9 @@ export default function SupplyCard({ supply, onEdit, onDelete, onAddStock, onRem
             {supply.quantity}
             <span className="text-sm font-normal text-stone-400 ml-1">{supply.unit}</span>
           </p>
-          {supply.cost_per_unit > 0 && (
+          {supply.costPerUnit > 0 && (
             <p className="text-xs text-stone-400 mt-1">
-              R$ {supply.cost_per_unit.toFixed(2)}/{supply.unit}
+              R$ {supply.costPerUnit.toFixed(2)}/{supply.unit}
             </p>
           )}
         </div>

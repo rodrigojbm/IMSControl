@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
@@ -8,6 +7,8 @@ import { toast } from "sonner";
 import SupplyForm from "@/components/supplies/SupplyForm";
 import SupplyCard from "@/components/supplies/SupplyCard";
 import StockMovementForm from "@/components/stock/StockMovementForm";
+import { suppliesApi, productsApi, movementsApi } from "@/api/apiClient";
+import { Plus, Search } from "lucide-react";
 
 export default function Supplies() {
   const [showForm, setShowForm] = useState(false);
@@ -19,16 +20,16 @@ export default function Supplies() {
 
   const { data: supplies = [], isLoading } = useQuery({
     queryKey: ["supplies"],
-    queryFn: () => base44.entities.Supply.list()
+    queryFn: () => suppliesApi.list()
   });
 
   const { data: products = [] } = useQuery({
     queryKey: ["products"],
-    queryFn: () => base44.entities.Product.list()
+    queryFn: () => productsApi.list()
   });
 
   const createMutation = useMutation({
-    mutationFn: (data) => base44.entities.Supply.create(data),
+    mutationFn: (data) => suppliesApi.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["supplies"] });
       setShowForm(false);
@@ -37,7 +38,7 @@ export default function Supplies() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.Supply.update(id, data),
+    mutationFn: ({ id, data }) => suppliesApi.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["supplies"] });
       setShowForm(false);
@@ -47,7 +48,7 @@ export default function Supplies() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id) => base44.entities.Supply.delete(id),
+    mutationFn: (id) => suppliesApi.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["supplies"] });
       toast.success("Insumo removido!");
@@ -56,15 +57,8 @@ export default function Supplies() {
 
   const movementMutation = useMutation({
     mutationFn: async (data) => {
-      await base44.entities.StockMovement.create(data);
-      // Update supply quantity
-      const supply = supplies.find(s => s.id === data.item_id);
-      if (supply) {
-        const newQuantity = data.type === "entrada" 
-          ? supply.quantity + data.quantity 
-          : supply.quantity - data.quantity;
-        await base44.entities.Supply.update(data.item_id, { quantity: Math.max(0, newQuantity) });
-      }
+      await movementsApi.create(data);
+      
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["supplies"] });
@@ -93,8 +87,8 @@ export default function Supplies() {
     }
   };
 
-  const filteredSupplies = supplies.filter(s =>
-    s.name.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredSupplies = (supplies ?? []).filter(s =>
+  (s?.name ?? "").toLowerCase().includes((searchTerm ?? "").toLowerCase())
   );
 
   // Group by category

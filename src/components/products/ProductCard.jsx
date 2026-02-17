@@ -17,9 +17,9 @@ const sizeLabels = {
 };
 
 export default function ProductCard({ product, onEdit, onDelete, onProduce }) {
-  const isLowStock = product.min_quantity && product.quantity <= product.min_quantity;
-  const profit = product.sale_price - product.production_cost;
-  const margin = product.sale_price > 0 ? ((profit / product.sale_price) * 100).toFixed(0) : 0;
+  const isLowStock = product.minQuantity && product.quantity <= product.minQuantity;
+  const profit = product.salePrice - product.productionCost;
+  const margin = product.salePrice > 0 ? ((profit / product.salePrice) * 100).toFixed(0) : 0;
 
   return (
     <Card className="p-4 border-0 shadow-sm bg-white hover:shadow-md transition-shadow">
@@ -35,7 +35,7 @@ export default function ProductCard({ product, onEdit, onDelete, onProduce }) {
             <Badge variant="outline" className="text-xs">
               {sizeLabels[product.size]}
             </Badge>
-            {product.sale_price > 0 && (
+            {product.salePrice > 0 && (
               <span className="text-xs text-emerald-600 font-medium">
                 {margin}% margem
               </span>
@@ -71,9 +71,9 @@ export default function ProductCard({ product, onEdit, onDelete, onProduce }) {
             {product.quantity}
             <span className="text-sm font-normal text-stone-400 ml-1">un</span>
           </p>
-          {product.sale_price > 0 && (
+          {product.salePrice > 0 && (
             <p className="text-sm text-amber-600 font-medium mt-1">
-              R$ {product.sale_price.toFixed(2)}
+              R$ {product.salePrice.toFixed(2)}
             </p>
           )}
         </div>

@@ -22,19 +22,19 @@ export default function FinancialReport({ movements }) {
 
     const filtered = movements.filter(m => {
       if (period === "all") return true;
-      const movDate = parseISO(m.movement_date);
+      const movDate = parseISO(m.movementDate);
       return isAfter(movDate, startDate) || movDate.getTime() === startDate.getTime();
     });
 
     // Gastos: entradas de insumos (compras)
     const expenses = filtered
-      .filter(m => m.type === "entrada" && m.item_type === "insumo" && m.category === "compra")
-      .reduce((acc, m) => acc + (m.total_value || 0), 0);
+      .filter(m => m.type === "entrada" && m.itemType === "insumo" && m.category === "compra")
+      .reduce((acc, m) => acc + (m.totalValue || 0), 0);
 
     // Receita: saídas de produtos (vendas)
     const revenue = filtered
-      .filter(m => m.type === "saida" && m.item_type === "produto" && m.category === "venda")
-      .reduce((acc, m) => acc + (m.total_value || 0), 0);
+      .filter(m => m.type === "saida" && m.itemType === "produto" && m.category === "venda")
+      .reduce((acc, m) => acc + (m.totalValue || 0), 0);
 
     // Lucro
     const profit = revenue - expenses;

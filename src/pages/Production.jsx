@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { base44 } from "@/api/base44Client";
+import { suppliesApi, productsApi, productionsApi } from "@/api/apiClient";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -17,78 +17,75 @@ export default function Production() {
 
   const { data: productions = [], isLoading } = useQuery({
     queryKey: ["productions"],
-    queryFn: () => base44.entities.Production.list("-production_date")
+    queryFn: () => productionsApi.list("-productionDate")
   });
 
   const { data: products = [] } = useQuery({
     queryKey: ["products"],
-    queryFn: () => base44.entities.Product.list()
+    queryFn: () => productsApi.list()
   });
 
   const { data: supplies = [] } = useQuery({
     queryKey: ["supplies"],
-    queryFn: () => base44.entities.Supply.list()
+    queryFn: () => suppliesApi.list()
   });
 
   const productionMutation = useMutation({
-    mutationFn: async (data) => {
-      await base44.entities.Production.create(data);
-      
-      const product = products.find(p => p.id === data.product_id);
-      if (product) {
-        await base44.entities.Product.update(data.product_id, {
-          quantity: product.quantity + data.quantity
-        });
-      }
-      
-      for (const item of data.supplies_used) {
-        const supply = supplies.find(s => s.id === item.supply_id);
-        if (supply) {
-          await base44.entities.Supply.update(item.supply_id, {
-            quantity: Math.max(0, supply.quantity - item.quantity_used)
-          });
-        }
-      }
-
-      for (const item of data.supplies_used) {
-        await base44.entities.StockMovement.create({
-          type: "saida",
-          category: "producao",
-          item_type: "insumo",
-          item_id: item.supply_id,
-          item_name: item.supply_name,
-          quantity: item.quantity_used,
-          unit: item.unit,
-          movement_date: data.production_date,
-          notes: `Usado na produção de ${data.quantity}x ${data.product_name}`
-        });
-      }
-
-      await base44.entities.StockMovement.create({
-        type: "entrada",
-        category: "producao",
-        item_type: "produto",
-        item_id: data.product_id,
-        item_name: data.product_name,
-        quantity: data.quantity,
-        unit: "un",
-        unit_value: data.total_cost / data.quantity,
-        total_value: data.total_cost,
-        movement_date: data.production_date
-      });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["products"] });
-      queryClient.invalidateQueries({ queryKey: ["supplies"] });
-      queryClient.invalidateQueries({ queryKey: ["productions"] });
-      queryClient.invalidateQueries({ queryKey: ["movements"] });
-      setShowForm(false);
-      toast.success("Produção registrada!");
+  mutationFn: async (data) => {
+    // API expects camelCase
+    // Filter out invalid items and ensure all required fields are present
+    // Don't include production field - it causes circular reference and API should handle it
+    const suppliesUsed = (data.suppliesUsed || [])
+      .filter(item => item && item.supplyId && item.supplyId > 0)
+      .map(item => ({
+        supplyId: Number(item.supplyId),
+        supplyName: item.supplyName || "",
+        quantityUsed: Number(item.quantityUsed) || 0,
+        unit: item.unit || ""
+        // Don't include production field - API will set it automatically
+      }));
+    
+    const apiData = {
+      productId: Number(data.productId),
+      productName: data.productName || "",
+      quantity: Number(data.quantity) || 1,
+      productionDate: data.productionDate,
+      suppliesUsed: suppliesUsed,
+      notes: data.notes || "",
+      totalCost: Number(data.totalCost) || 0
+    };
+    
+    console.log("Dados sendo enviados para API:", JSON.stringify(apiData, null, 2));
+    
+    try {
+      const response = await productionsApi.create(apiData);
+      console.log("Resposta da API:", response);
+      return response;
+    } catch (error) {
+      console.error("Erro completo:", error);
+      console.error("Resposta do erro:", error?.response?.data);
+      throw error;
     }
-  });
+  },
+  onSuccess: () => {
+    queryClient.invalidateQueries({ queryKey: ["products"] });
+    queryClient.invalidateQueries({ queryKey: ["supplies"] });
+    queryClient.invalidateQueries({ queryKey: ["productions"] });
+    setShowForm(false);
+    toast.success("Produção registrada!");
+  },
+  onError: (error) => {
+    console.error("Erro ao registrar produção:", error);
+    const errorMessage = error?.response?.data?.message || 
+                         error?.response?.data?.error || 
+                         JSON.stringify(error?.response?.data) ||
+                         "Erro ao registrar produção";
+    toast.error(errorMessage);
+  }
+});
 
   const deleteMutation = useMutation({
-    mutationFn: (id) => base44.entities.Production.delete(id),
+    mutationFn: (id) => productionsApi.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["productions"] });
       toast.success("Registro removido!");
@@ -97,7 +94,7 @@ export default function Production() {
 
   // Group by date
   const groupedProductions = productions.reduce((acc, prod) => {
-    const date = prod.production_date;
+    const date = prod.productionDate;
     if (!acc[date]) acc[date] = [];
     acc[date].push(prod);
     return acc;
@@ -150,22 +147,22 @@ export default function Production() {
                             </div>
                             <div>
                               <h3 className="font-medium text-stone-800">
-                                {production.product_name}
+                                {production.productName}
                               </h3>
                               <div className="flex items-center gap-3 mt-2">
                                 <Badge variant="outline" className="text-xs">
                                   {production.quantity} unidades
                                 </Badge>
-                                {production.total_cost > 0 && (
+                                {production.totalCost > 0 && (
                                   <span className="text-xs text-stone-500">
-                                    Custo: R$ {production.total_cost.toFixed(2)}
+                                    Custo: R$ {production.totalCost.toFixed(2)}
                                   </span>
                                 )}
                               </div>
-                              {production.supplies_used && production.supplies_used.length > 0 && (
+                              {production.suppliesUsed && production.suppliesUsed.length > 0 && (
                                 <div className="mt-3 text-xs text-stone-400">
-                                  Insumos: {production.supplies_used.map(s => 
-                                    `${s.supply_name} (${s.quantity_used} ${s.unit})`
+                                  Insumos: {production.suppliesUsed.map(s => 
+                                    `${s.supplyName} (${s.quantityUsed} ${s.unit})`
                                   ).join(", ")}
                                 </div>
                               )}

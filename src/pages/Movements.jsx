@@ -1,14 +1,16 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { base44 } from "@/api/base44Client";
+import { suppliesApi, productsApi, movementsApi } from "@/api/apiClient";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { ArrowDownCircle, ArrowUpCircle } from "lucide-react";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
+import { Trash2 } from "lucide-react";
 import StockMovementForm from "@/components/stock/StockMovementForm";
 
 export default function Movements() {
@@ -20,52 +22,32 @@ export default function Movements() {
 
   const { data: movements = [], isLoading } = useQuery({
     queryKey: ["movements"],
-    queryFn: () => base44.entities.StockMovement.list("-movement_date")
+    queryFn: () => movementsApi.list("-movementDate")
   });
 
   const { data: supplies = [] } = useQuery({
     queryKey: ["supplies"],
-    queryFn: () => base44.entities.Supply.list()
+    queryFn: () => suppliesApi.list()
   });
 
   const { data: products = [] } = useQuery({
     queryKey: ["products"],
-    queryFn: () => base44.entities.Product.list()
+    queryFn: () => productsApi.list()
   });
 
   const movementMutation = useMutation({
     mutationFn: async (data) => {
-      await base44.entities.StockMovement.create(data);
-      
-      if (data.item_type === "insumo") {
-        const supply = supplies.find(s => s.id === data.item_id);
-        if (supply) {
-          const newQuantity = data.type === "entrada"
-            ? supply.quantity + data.quantity
-            : supply.quantity - data.quantity;
-          await base44.entities.Supply.update(data.item_id, { quantity: Math.max(0, newQuantity) });
-        }
-      } else {
-        const product = products.find(p => p.id === data.item_id);
-        if (product) {
-          const newQuantity = data.type === "entrada"
-            ? product.quantity + data.quantity
-            : product.quantity - data.quantity;
-          await base44.entities.Product.update(data.item_id, { quantity: Math.max(0, newQuantity) });
-        }
-      }
+      await movementsApi.create(data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["movements"] });
-      queryClient.invalidateQueries({ queryKey: ["supplies"] });
-      queryClient.invalidateQueries({ queryKey: ["products"] });
       setShowForm(false);
       toast.success("Movimentação registrada!");
     }
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id) => base44.entities.StockMovement.delete(id),
+    mutationFn: (id) => movementsApi.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["movements"] });
       toast.success("Registro removido!");
@@ -90,7 +72,7 @@ export default function Movements() {
 
   // Group by date
   const groupedMovements = filteredMovements.reduce((acc, mov) => {
-    const date = mov.movement_date;
+    const date = mov.movementDate;
     if (!acc[date]) acc[date] = [];
     acc[date].push(mov);
     return acc;
@@ -165,20 +147,20 @@ export default function Movements() {
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2">
                               <h3 className="font-medium text-stone-800 truncate">
-                                {movement.item_name}
+                                {movement.itemName}
                               </h3>
                               <Badge variant="outline" className="text-xs shrink-0">
-                                {movement.item_type === "insumo" ? "Insumo" : "Produto"}
+                                {movement.itemType === "insumo" ? "Insumo" : "Produto"}
                               </Badge>
                             </div>
                             <div className="flex items-center gap-3 mt-1 text-sm text-stone-500">
                               <span>{categoryLabels[movement.category]}</span>
                               <span>•</span>
                               <span>{movement.quantity} {movement.unit}</span>
-                              {movement.total_value > 0 && (
+                              {movement.totalValue > 0 && (
                                 <>
                                   <span>•</span>
-                                  <span>R$ {movement.total_value.toFixed(2)}</span>
+                                  <span>R$ {movement.totalValue.toFixed(2)}</span>
                                 </>
                               )}
                             </div>

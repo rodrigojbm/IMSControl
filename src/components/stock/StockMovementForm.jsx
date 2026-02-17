@@ -20,14 +20,14 @@ export default function StockMovementForm({
   const [formData, setFormData] = useState({
     type,
     category: type === "entrada" ? "compra" : "venda",
-    item_type: itemType,
-    item_id: item?.id || "",
-    item_name: item?.name || "",
+    itemType: itemType,
+    itemId: item?.id || "",
+    itemName: item?.name || "",
     quantity: 0,
     unit: item?.unit || "un",
-    unit_value: item?.cost_per_unit || item?.sale_price || 0,
-    total_value: 0,
-    movement_date: format(new Date(), "yyyy-MM-dd"),
+    unitValue: item?.cost_per_unit || item?.sale_price || 0,
+    totalValue: 0,
+    movementDate: format(new Date(), "yyyy-MM-dd"),
     notes: ""
   });
 
@@ -47,19 +47,19 @@ export default function StockMovementForm({
   const categories = type === "entrada" ? entryCategories : exitCategories;
 
   const handleItemChange = (itemId) => {
-    const items = formData.item_type === "insumo" ? supplies : products;
+    const items = formData.itemType === "insumo" ? supplies : products;
     const selectedItem = items.find(i => i.id === itemId);
     if (selectedItem) {
-      const unitValue = formData.item_type === "insumo" 
+      const unitValue = formData.itemType === "insumo" 
         ? selectedItem.cost_per_unit || 0 
         : (type === "saida" ? selectedItem.sale_price : selectedItem.production_cost) || 0;
       setFormData(prev => ({
         ...prev,
-        item_id: itemId,
-        item_name: selectedItem.name,
+        itemId: itemId,
+        itemName: selectedItem.name,
         unit: selectedItem.unit || "un",
-        unit_value: unitValue,
-        total_value: prev.quantity * unitValue
+        unitValue: unitValue,
+        totalValue: prev.quantity * unitValue
       }));
     }
   };
@@ -69,7 +69,7 @@ export default function StockMovementForm({
     setFormData(prev => ({
       ...prev,
       quantity,
-      total_value: quantity * prev.unit_value
+      totalValue: quantity * prev.unitValue
     }));
   };
 
@@ -77,8 +77,8 @@ export default function StockMovementForm({
     const unitValue = parseFloat(value) || 0;
     setFormData(prev => ({
       ...prev,
-      unit_value: unitValue,
-      total_value: prev.quantity * unitValue
+      unitValue: unitValue,
+      totalValue: prev.quantity * unitValue
     }));
   };
 
@@ -87,7 +87,7 @@ export default function StockMovementForm({
     onSubmit(formData);
   };
 
-  const items = formData.item_type === "insumo" ? supplies : products;
+  const items = formData.itemType === "insumo" ? supplies : products;
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
@@ -104,8 +104,8 @@ export default function StockMovementForm({
         <div className="space-y-2">
           <Label>Tipo de Item</Label>
           <Select
-            value={formData.item_type}
-            onValueChange={(value) => setFormData({ ...formData, item_type: value, item_id: "", item_name: "" })}
+            value={formData.itemType}
+            onValueChange={(value) => setFormData({ ...formData, itemType: value, itemId: "", itemName: "" })}
           >
             <SelectTrigger>
               <SelectValue />
@@ -139,7 +139,7 @@ export default function StockMovementForm({
         <div className="col-span-2 space-y-2">
           <Label>Item *</Label>
           <Select
-            value={formData.item_id}
+            value={formData.itemId}
             onValueChange={handleItemChange}
             required
           >
@@ -175,24 +175,24 @@ export default function StockMovementForm({
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="unit_value">Valor Unitário (R$)</Label>
+          <Label htmlFor="unitValue">Valor Unitário (R$)</Label>
           <Input
-            id="unit_value"
+            id="unitValue"
             type="number"
             step="0.01"
             min="0"
-            value={formData.unit_value}
+            value={formData.unitValue}
             onChange={(e) => handleUnitValueChange(e.target.value)}
           />
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="movement_date">Data</Label>
+          <Label htmlFor="movementDate">Data</Label>
           <Input
-            id="movement_date"
+            id="movementDate"
             type="date"
-            value={formData.movement_date}
-            onChange={(e) => setFormData({ ...formData, movement_date: e.target.value })}
+            value={formData.movementDate}
+            onChange={(e) => setFormData({ ...formData, movementDate: e.target.value })}
           />
         </div>
 
@@ -200,7 +200,7 @@ export default function StockMovementForm({
           <Label>Valor Total</Label>
           <div className="flex items-center h-10 px-3 bg-stone-100 rounded-md">
             <span className="font-semibold text-amber-600">
-              R$ {formData.total_value.toFixed(2)}
+              R$ {formData.totalValue.toFixed(2)}
             </span>
           </div>
         </div>

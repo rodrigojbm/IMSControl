@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { base44 } from "@/api/base44Client";
+import { suppliesApi, productsApi, movementsApi, productionsApi } from "@/api/apiClient";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
@@ -22,16 +22,16 @@ export default function Products() {
 
   const { data: products = [], isLoading } = useQuery({
     queryKey: ["products"],
-    queryFn: () => base44.entities.Product.list()
+    queryFn: () => productsApi.list()
   });
 
   const { data: supplies = [] } = useQuery({
     queryKey: ["supplies"],
-    queryFn: () => base44.entities.Supply.list()
+    queryFn: () => suppliesApi.list()
   });
 
   const createMutation = useMutation({
-    mutationFn: (data) => base44.entities.Product.create(data),
+    mutationFn: (data) => productsApi.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["products"] });
       setShowForm(false);
@@ -40,7 +40,7 @@ export default function Products() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.Product.update(id, data),
+    mutationFn: ({ id, data }) => productsApi.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["products"] });
       setShowForm(false);
@@ -50,7 +50,7 @@ export default function Products() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id) => base44.entities.Product.delete(id),
+    mutationFn: (id) => productsApi.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["products"] });
       toast.success("Produto removido!");
@@ -58,77 +58,42 @@ export default function Products() {
   });
 
   const productionMutation = useMutation({
-    mutationFn: async (data) => {
-      // Create production record
-      await base44.entities.Production.create(data);
-      
-      // Update product quantity
-      const product = products.find(p => p.id === data.product_id);
-      if (product) {
-        await base44.entities.Product.update(data.product_id, {
-          quantity: product.quantity + data.quantity
-        });
-      }
-      
-      // Update supplies quantities
-      for (const item of data.supplies_used) {
-        const supply = supplies.find(s => s.id === item.supply_id);
-        if (supply) {
-          await base44.entities.Supply.update(item.supply_id, {
-            quantity: Math.max(0, supply.quantity - item.quantity_used)
-          });
-        }
-      }
-
-      // Create stock movements for supplies used
-      for (const item of data.supplies_used) {
-        await base44.entities.StockMovement.create({
-          type: "saida",
-          category: "producao",
-          item_type: "insumo",
-          item_id: item.supply_id,
-          item_name: item.supply_name,
-          quantity: item.quantity_used,
-          unit: item.unit,
-          movement_date: data.production_date,
-          notes: `Usado na produção de ${data.quantity}x ${data.product_name}`
-        });
-      }
-
-      // Create stock movement for product entry
-      await base44.entities.StockMovement.create({
-        type: "entrada",
-        category: "producao",
-        item_type: "produto",
-        item_id: data.product_id,
-        item_name: data.product_name,
-        quantity: data.quantity,
-        unit: "un",
-        unit_value: data.total_cost / data.quantity,
-        total_value: data.total_cost,
-        movement_date: data.production_date
-      });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["products"] });
-      queryClient.invalidateQueries({ queryKey: ["supplies"] });
-      queryClient.invalidateQueries({ queryKey: ["productions"] });
-      queryClient.invalidateQueries({ queryKey: ["movements"] });
-      setProductionModal({ open: false, product: null });
-      toast.success("Produção registrada com sucesso!");
-    }
-  });
+  mutationFn: async (data) => {
+    // API expects camelCase, and Production field is not needed on creation
+    const apiData = {
+      productId: data.productId,
+      productName: data.productName,
+      quantity: data.quantity,
+      productionDate: data.productionDate,
+      suppliesUsed: (data.suppliesUsed || []).map(item => ({
+        supplyId: item.supplyId,
+        supplyName: item.supplyName,
+        quantityUsed: item.quantityUsed,
+        unit: item.unit
+        // Don't include production field - API will set it when creating the production
+      })),
+      notes: data.notes || "",
+      totalCost: data.totalCost
+    };
+    await productionsApi.create(apiData);
+  },
+  onSuccess: () => {
+    queryClient.invalidateQueries({ queryKey: ["products"] });
+    queryClient.invalidateQueries({ queryKey: ["supplies"] });
+    queryClient.invalidateQueries({ queryKey: ["productions"] });
+    queryClient.invalidateQueries({ queryKey: ["movements"] });
+    setProductionModal({ open: false, product: null });
+    toast.success("Produção registrada com sucesso!");
+  },
+  onError: (error) => {
+    console.error("Erro ao registrar produção:", error);
+    toast.error(error?.response?.data?.message || "Erro ao registrar produção");
+  }
+});
 
   const stockMutation = useMutation({
     mutationFn: async (data) => {
-      await base44.entities.StockMovement.create(data);
-      const product = products.find(p => p.id === data.item_id);
-      if (product) {
-        const newQuantity = data.type === "entrada"
-          ? product.quantity + data.quantity
-          : product.quantity - data.quantity;
-        await base44.entities.Product.update(data.item_id, { quantity: Math.max(0, newQuantity) });
-      }
+      await movementsApi.create(data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["products"] });
@@ -157,8 +122,8 @@ export default function Products() {
     }
   };
 
-  const filteredProducts = products.filter(p =>
-    p.name.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredProducts = (products ?? []).filter(p =>
+    (p?.name ?? "").toLowerCase().includes((searchTerm ?? "").toLowerCase())
   );
 
   // Group by size

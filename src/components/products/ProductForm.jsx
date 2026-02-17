@@ -19,38 +19,54 @@ export default function ProductForm({ product, supplies, onSubmit, onCancel, isL
     description: product?.description || "",
     size: product?.size || "",
     quantity: product?.quantity || 0,
-    min_quantity: product?.min_quantity || 0,
-    production_cost: product?.production_cost || 0,
-    sale_price: product?.sale_price || 0,
+    minQuantity: product?.minQuantity || 0,
+    productionCost: product?.productionCost || 0,
+    salePrice: product?.salePrice || 0,
     recipe: product?.recipe || [],
-    image_url: product?.image_url || ""
+    imageUrl: product?.imageUrl || ""
   });
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    onSubmit(formData);
+ const handleSubmit = (e) => {
+  e.preventDefault();
+
+  const payload = {
+    ...formData,
+    recipe: (formData.recipe || [])
+      .filter(r => r.supplyId) // remove linhas vazias
+      .map(r => ({
+        supplyId: Number(r.supplyId),
+        quantity: Number(r.quantity)
+      }))
   };
 
+  onSubmit(payload);
+};
+
   const addRecipeItem = () => {
-    setFormData({
-      ...formData,
-      recipe: [...formData.recipe, { supply_id: "", supply_name: "", quantity: 0, unit: "" }]
-    });
+    setFormData(prev => ({
+      ...prev,
+      recipe: [...prev.recipe, { supplyId: "", quantity: 0, supplyName: "", unit: "" }]
+    }));
   };
+
 
   const updateRecipeItem = (index, field, value) => {
     const newRecipe = [...formData.recipe];
-    if (field === "supply_id") {
-      const supply = supplies.find(s => s.id === value);
+
+    if (field === "supplyId") {
+      const supplyIdNum = Number(value);
+      const supply = supplies.find(s => s.id === supplyIdNum);
+
       newRecipe[index] = {
         ...newRecipe[index],
-        supply_id: value,
-        supply_name: supply?.name || "",
+        supplyId: supplyIdNum,
+        supplyName: supply?.name || "",
         unit: supply?.unit || ""
       };
     } else {
       newRecipe[index] = { ...newRecipe[index], [field]: value };
     }
+
     setFormData({ ...formData, recipe: newRecipe });
   };
 
@@ -96,24 +112,21 @@ export default function ProductForm({ product, supplies, onSubmit, onCancel, isL
         </div>
 
         <div className="space-y-2">
-          <Label>Tamanho *</Label>
-          <Select
-            value={formData.size}
-            onValueChange={(value) => setFormData({ ...formData, size: value })}
-            required
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Selecione" />
-            </SelectTrigger>
-            <SelectContent>
-              {sizes.map((size) => (
-                <SelectItem key={size.value} value={size.value}>
-                  {size.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+  <Label>Tamanho *</Label>
+  <Select value={formData.size} onValueChange={(value) => setFormData({ ...formData, size: value })}>
+    <SelectTrigger>
+      <SelectValue placeholder="Selecione" />
+    </SelectTrigger>
+    <SelectContent>
+      {sizes.map((size) => (
+        <SelectItem key={size.value} value={size.value}>
+          {size.label}
+        </SelectItem>
+      ))}
+    </SelectContent>
+  </Select>
+  </div>
+
 
         <div className="space-y-2">
           <Label htmlFor="quantity">Quantidade em Estoque</Label>
@@ -127,37 +140,37 @@ export default function ProductForm({ product, supplies, onSubmit, onCancel, isL
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="min_quantity">Estoque Mínimo</Label>
+          <Label htmlFor="minQuantity">Estoque Mínimo</Label>
           <Input
-            id="min_quantity"
+            id="minQuantity"
             type="number"
             min="0"
-            value={formData.min_quantity}
-            onChange={(e) => setFormData({ ...formData, min_quantity: parseInt(e.target.value) || 0 })}
+            value={formData.minQuantity}
+            onChange={(e) => setFormData({ ...formData, minQuantity: parseInt(e.target.value) || 0 })}
           />
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="production_cost">Custo de Produção (R$)</Label>
+          <Label htmlFor="productionCost">Custo de Produção (R$)</Label>
           <Input
-            id="production_cost"
+            id="productionCost"
             type="number"
             step="0.01"
             min="0"
-            value={formData.production_cost}
-            onChange={(e) => setFormData({ ...formData, production_cost: parseFloat(e.target.value) || 0 })}
+            value={formData.productionCost}
+            onChange={(e) => setFormData({ ...formData, productionCost: parseFloat(e.target.value) || 0 })}
           />
         </div>
 
         <div className="col-span-2 space-y-2">
-          <Label htmlFor="sale_price">Preço de Venda (R$)</Label>
+          <Label htmlFor="salePrice">Preço de Venda (R$)</Label>
           <Input
-            id="sale_price"
+            id="salePrice"
             type="number"
             step="0.01"
             min="0"
-            value={formData.sale_price}
-            onChange={(e) => setFormData({ ...formData, sale_price: parseFloat(e.target.value) || 0 })}
+            value={formData.salePrice}
+            onChange={(e) => setFormData({ ...formData, salePrice: parseFloat(e.target.value) || 0 })}
           />
         </div>
       </div>
@@ -181,15 +194,15 @@ export default function ProductForm({ product, supplies, onSubmit, onCancel, isL
             {formData.recipe.map((item, index) => (
               <div key={index} className="flex items-center gap-2 p-3 bg-stone-50 rounded-lg">
                 <Select
-                  value={item.supply_id}
-                  onValueChange={(value) => updateRecipeItem(index, "supply_id", value)}
+                  value={item.supplyId ? String(item.supplyId) : ""}
+                  onValueChange={(value) => updateRecipeItem(index, "supplyId", value)}
                 >
                   <SelectTrigger className="flex-1">
                     <SelectValue placeholder="Selecione o insumo" />
                   </SelectTrigger>
                   <SelectContent>
                     {supplies.map((supply) => (
-                      <SelectItem key={supply.id} value={supply.id}>
+                      <SelectItem key={supply.id} value={String(supply.id)}>
                         {supply.name} ({supply.unit})
                       </SelectItem>
                     ))}

@@ -9,11 +9,11 @@ import { format } from "date-fns";
 
 export default function ProductionForm({ product, products, supplies, onSubmit, onCancel, isLoading }) {
   const [formData, setFormData] = useState({
-    product_id: product?.id || "",
-    product_name: product?.name || "",
+    productId: product?.id || "",
+    productName: product?.name || "",
     quantity: 1,
-    production_date: format(new Date(), "yyyy-MM-dd"),
-    supplies_used: [],
+    productionDate: format(new Date(), "yyyy-MM-dd"),
+    suppliesUsed: [],
     notes: ""
   });
 
@@ -23,29 +23,33 @@ export default function ProductionForm({ product, products, supplies, onSubmit, 
   useEffect(() => {
     if (selectedProduct) {
       const recipe = selectedProduct.recipe || [];
-      const suppliesUsed = recipe.map(item => ({
-        supply_id: item.supply_id,
-        supply_name: item.supply_name,
-        quantity_used: item.quantity * formData.quantity,
-        unit: item.unit
-      }));
+      const suppliesUsed = recipe.map(item => {
+        const supplyId = item.supplyId || item.supplyId;
+        const supply = supplies.find(s => s.id === supplyId);
+        return {
+          supplyId: supplyId,
+          supplyName: supply?.name || item.supplyName || "",
+          quantityUsed: item.quantity * formData.quantity,
+          unit: supply?.unit || item.unit || ""
+        };
+      });
       
       setFormData(prev => ({
         ...prev,
-        product_id: selectedProduct.id,
-        product_name: selectedProduct.name,
-        supplies_used: suppliesUsed
+        productId: selectedProduct.id,
+        productName: selectedProduct.name,
+        suppliesUsed: suppliesUsed
       }));
 
       // Check for insufficient supplies
       const insufficient = suppliesUsed.filter(item => {
-        const supply = supplies.find(s => s.id === item.supply_id);
-        return supply && supply.quantity < item.quantity_used;
+        const supply = supplies.find(s => s.id === item.supplyId);
+        return supply && supply.quantity < item.quantityUsed;
       }).map(item => {
-        const supply = supplies.find(s => s.id === item.supply_id);
+        const supply = supplies.find(s => s.id === item.supplyId);
         return {
-          name: item.supply_name,
-          needed: item.quantity_used,
+          name: item.supplyName,
+          needed: item.quantityUsed,
           available: supply?.quantity || 0,
           unit: item.unit
         };
@@ -56,23 +60,29 @@ export default function ProductionForm({ product, products, supplies, onSubmit, 
   }, [selectedProduct, formData.quantity, supplies]);
 
   const handleProductChange = (productId) => {
-    const prod = products.find(p => p.id === productId);
+    // Convert to number if needed, as Select returns string
+    const id = typeof productId === 'string' ? Number(productId) : productId;
+    const prod = products.find(p => p.id === id || p.id === productId);
     setSelectedProduct(prod);
   };
 
   const handleQuantityChange = (qty) => {
     const quantity = parseInt(qty) || 1;
     if (selectedProduct?.recipe) {
-      const suppliesUsed = selectedProduct.recipe.map(item => ({
-        supply_id: item.supply_id,
-        supply_name: item.supply_name,
-        quantity_used: item.quantity * quantity,
-        unit: item.unit
-      }));
+      const suppliesUsed = selectedProduct.recipe.map(item => {
+        const supplyId = item.supplyId || item.supplyId;
+        const supply = supplies.find(s => s.id === supplyId);
+        return {
+          supplyId: supplyId,
+          supplyName: supply?.name || item.supplyName || "",
+          quantityUsed: item.quantity * quantity,
+          unit: supply?.unit || item.unit || ""
+        };
+      });
       setFormData(prev => ({
         ...prev,
         quantity,
-        supplies_used: suppliesUsed
+        suppliesUsed: suppliesUsed
       }));
     } else {
       setFormData(prev => ({ ...prev, quantity }));
@@ -81,10 +91,10 @@ export default function ProductionForm({ product, products, supplies, onSubmit, 
 
   const calculateTotalCost = () => {
     let total = 0;
-    formData.supplies_used.forEach(item => {
-      const supply = supplies.find(s => s.id === item.supply_id);
-      if (supply?.cost_per_unit) {
-        total += supply.cost_per_unit * item.quantity_used;
+    formData.suppliesUsed.forEach(item => {
+      const supply = supplies.find(s => s.id === item.supplyId);
+      if (supply?.costPerUnit) {
+        total += supply.costPerUnit * item.quantityUsed;
       }
     });
     return total;
@@ -92,10 +102,24 @@ export default function ProductionForm({ product, products, supplies, onSubmit, 
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSubmit({
-      ...formData,
-      total_cost: calculateTotalCost()
-    });
+    
+    // Ensure suppliesUsed is properly formatted and productId is a number
+    const payload = {
+      productId: Number(formData.productId),
+      productName: formData.productName,
+      quantity: Number(formData.quantity),
+      productionDate: formData.productionDate,
+      suppliesUsed: (formData.suppliesUsed || []).map(item => ({
+        supplyId: Number(item.supplyId),
+        supplyName: item.supplyName,
+        quantityUsed: Number(item.quantityUsed),
+        unit: item.unit
+      })),
+      notes: formData.notes || "",
+      totalCost: calculateTotalCost()
+    };
+    
+    onSubmit(payload);
   };
 
   return (
@@ -111,7 +135,7 @@ export default function ProductionForm({ product, products, supplies, onSubmit, 
         <div className="col-span-2 space-y-2">
           <Label>Produto *</Label>
           <Select
-            value={formData.product_id}
+            value={formData.productId ? String(formData.productId) : ""}
             onValueChange={handleProductChange}
             required
           >
@@ -120,7 +144,7 @@ export default function ProductionForm({ product, products, supplies, onSubmit, 
             </SelectTrigger>
             <SelectContent>
               {products.map((prod) => (
-                <SelectItem key={prod.id} value={prod.id}>
+                <SelectItem key={prod.id} value={String(prod.id)}>
                   {prod.name}
                 </SelectItem>
               ))}
@@ -141,32 +165,32 @@ export default function ProductionForm({ product, products, supplies, onSubmit, 
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="production_date">Data da Produção</Label>
+          <Label htmlFor="productionDate">Data da Produção</Label>
           <Input
-            id="production_date"
+            id="productionDate"
             type="date"
-            value={formData.production_date}
-            onChange={(e) => setFormData({ ...formData, production_date: e.target.value })}
+            value={formData.productionDate}
+            onChange={(e) => setFormData({ ...formData, productionDate: e.target.value })}
           />
         </div>
       </div>
 
       {/* Supplies to be used */}
-      {formData.supplies_used.length > 0 && (
+      {formData.suppliesUsed.length > 0 && (
         <div className="space-y-3">
           <Label>Insumos que serão utilizados</Label>
           <div className="bg-stone-50 rounded-lg p-4 space-y-2">
-            {formData.supplies_used.map((item, index) => {
-              const supply = supplies.find(s => s.id === item.supply_id);
-              const isInsufficient = supply && supply.quantity < item.quantity_used;
+            {formData.suppliesUsed.map((item, index) => {
+              const supply = supplies.find(s => s.id === item.supplyId);
+              const isInsufficient = supply && supply.quantity < item.quantityUsed;
               return (
                 <div 
                   key={index} 
                   className={`flex items-center justify-between py-2 border-b border-stone-200 last:border-0 ${isInsufficient ? 'text-rose-600' : ''}`}
                 >
-                  <span className="text-sm">{item.supply_name}</span>
+                  <span className="text-sm">{item.supplyName}</span>
                   <span className="text-sm font-medium">
-                    {item.quantity_used.toFixed(2)} {item.unit}
+                    {item.quantityUsed.toFixed(2)} {item.unit}
                     {supply && (
                       <span className="text-xs text-stone-400 ml-1">
                         (disp: {supply.quantity} {item.unit})
