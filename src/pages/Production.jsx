@@ -31,58 +31,58 @@ export default function Production() {
   });
 
   const productionMutation = useMutation({
-  mutationFn: async (data) => {
-    // API expects camelCase
-    // Filter out invalid items and ensure all required fields are present
-    // Don't include production field - it causes circular reference and API should handle it
-    const suppliesUsed = (data.suppliesUsed || [])
-      .filter(item => item && item.supplyId && item.supplyId > 0)
-      .map(item => ({
-        supplyId: Number(item.supplyId),
-        supplyName: item.supplyName || "",
-        quantityUsed: Number(item.quantityUsed) || 0,
-        unit: item.unit || ""
-        // Don't include production field - API will set it automatically
-      }));
-    
-    const apiData = {
-      productId: Number(data.productId),
-      productName: data.productName || "",
-      quantity: Number(data.quantity) || 1,
-      productionDate: data.productionDate,
-      suppliesUsed: suppliesUsed,
-      notes: data.notes || "",
-      totalCost: Number(data.totalCost) || 0
-    };
-    
-    console.log("Dados sendo enviados para API:", JSON.stringify(apiData, null, 2));
-    
-    try {
-      const response = await productionsApi.create(apiData);
-      console.log("Resposta da API:", response);
-      return response;
-    } catch (error) {
-      console.error("Erro completo:", error);
-      console.error("Resposta do erro:", error?.response?.data);
-      throw error;
+    mutationFn: async (data) => {
+      // API expects camelCase
+      // Filter out invalid items and ensure all required fields are present
+      // Don't include production field - it causes circular reference and API should handle it
+      const suppliesUsed = (data.suppliesUsed || [])
+        .filter(item => item && item.supplyId && item.supplyId > 0)
+        .map(item => ({
+          supplyId: Number(item.supplyId),
+          supplyName: item.supplyName || "",
+          quantityUsed: Number(item.quantityUsed) || 0,
+          unit: item.unit || ""
+          // Don't include production field - API will set it automatically
+        }));
+
+      const apiData = {
+        productId: Number(data.productId),
+        productName: data.productName || "",
+        quantity: Number(data.quantity) || 1,
+        productionDate: data.productionDate,
+        suppliesUsed: suppliesUsed,
+        notes: data.notes || "",
+        totalCost: Number(data.totalCost) || 0
+      };
+
+      console.log("Dados sendo enviados para API:", JSON.stringify(apiData, null, 2));
+
+      try {
+        const response = await productionsApi.create(apiData);
+        console.log("Resposta da API:", response);
+        return response;
+      } catch (error) {
+        console.error("Erro completo:", error);
+        console.error("Resposta do erro:", error?.response?.data);
+        throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+      queryClient.invalidateQueries({ queryKey: ["supplies"] });
+      queryClient.invalidateQueries({ queryKey: ["productions"] });
+      setShowForm(false);
+      toast.success("Produção registrada!");
+    },
+    onError: (error) => {
+      console.error("Erro ao registrar produção:", error);
+      const errorMessage = error?.response?.data?.message ||
+        error?.response?.data?.error ||
+        JSON.stringify(error?.response?.data) ||
+        "Erro ao registrar produção";
+      toast.error(errorMessage);
     }
-  },
-  onSuccess: () => {
-    queryClient.invalidateQueries({ queryKey: ["products"] });
-    queryClient.invalidateQueries({ queryKey: ["supplies"] });
-    queryClient.invalidateQueries({ queryKey: ["productions"] });
-    setShowForm(false);
-    toast.success("Produção registrada!");
-  },
-  onError: (error) => {
-    console.error("Erro ao registrar produção:", error);
-    const errorMessage = error?.response?.data?.message || 
-                         error?.response?.data?.error || 
-                         JSON.stringify(error?.response?.data) ||
-                         "Erro ao registrar produção";
-    toast.error(errorMessage);
-  }
-});
+  });
 
   const deleteMutation = useMutation({
     mutationFn: (id) => productionsApi.delete(id),
@@ -161,7 +161,7 @@ export default function Production() {
                               </div>
                               {production.suppliesUsed && production.suppliesUsed.length > 0 && (
                                 <div className="mt-3 text-xs text-stone-400">
-                                  Insumos: {production.suppliesUsed.map(s => 
+                                  Itens: {production.suppliesUsed.map(s =>
                                     `${s.supplyName} (${s.quantityUsed} ${s.unit})`
                                   ).join(", ")}
                                 </div>

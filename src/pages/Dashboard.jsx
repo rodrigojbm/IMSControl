@@ -33,7 +33,7 @@ export default function Dashboard() {
   });
 
   // Calculate stats
-  const totalSupplyValue = supplies.reduce((acc, s) => acc + (s.quantity * (s.costPerUnit || 0)), 0);
+  const totalSupplyValue = supplies.reduce((acc, s) => acc + (s.totalValue || 0), 0);
   const totalProductValue = products.reduce((acc, p) => acc + (p.quantity * (p.salePrice || 0)), 0);
   const totalProduced = productions.reduce((acc, p) => acc + p.quantity, 0);
 
@@ -52,7 +52,7 @@ export default function Dashboard() {
         {/* Stats Grid */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <StatsCard
-            title="Tipos de Insumos"
+            title="Tipos de Itens"
             value={supplies.length}
             subtitle={`R$ ${totalSupplyValue.toFixed(2)} em estoque`}
             icon={Package}

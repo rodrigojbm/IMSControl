@@ -12,8 +12,7 @@ import {
 const sizeLabels = {
   pequena: "P",
   media: "M",
-  grande: "G",
-  especial: "ESP"
+  grande: "G"
 };
 
 export default function ProductCard({ product, onEdit, onDelete, onProduce }) {
@@ -77,8 +76,8 @@ export default function ProductCard({ product, onEdit, onDelete, onProduce }) {
             </p>
           )}
         </div>
-        <Button 
-          variant="outline" 
+        <Button
+          variant="outline"
           size="sm"
           onClick={() => onProduce(product)}
           className="text-amber-600 border-amber-200 hover:bg-amber-50"

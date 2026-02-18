@@ -33,29 +33,59 @@ export default function SupplyForm({ supply, onSubmit, onCancel, isLoading }) {
     quantity: supply?.quantity || 0,
     minQuantity: supply?.minQuantity || 0,
     costPerUnit: supply?.costPerUnit || 0,
+    totalCost: supply?.totalValue || 0,
     supplier: supply?.supplier || "",
     notes: supply?.notes || ""
   });
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSubmit(formData);
+    // Ensure we send costPerUnit, totalCost is just for UI/calculation
+    const { totalCost, ...data } = formData;
+
+    // Map totalCost to totalValue for the API
+    const dataToSend = {
+      ...data,
+      totalValue: totalCost
+    };
+
+    onSubmit(dataToSend);
+  };
+
+  const handleQuantityChange = (value) => {
+    const quantity = parseFloat(value) || 0;
+    const totalCost = quantity * formData.costPerUnit;
+    setFormData({ ...formData, quantity, totalCost });
+  };
+
+  const handleUnitCostChange = (value) => {
+    const costPerUnit = parseFloat(value) || 0;
+    const totalCost = costPerUnit * formData.quantity;
+    setFormData({ ...formData, costPerUnit, totalCost });
+  };
+
+  const handleTotalCostChange = (value) => {
+    const totalCost = parseFloat(value) || 0;
+    let costPerUnit = formData.costPerUnit;
+
+    if (formData.quantity > 0) {
+      costPerUnit = totalCost / formData.quantity;
+    }
+
+    setFormData({ ...formData, totalCost, costPerUnit });
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
       <div className="flex items-center justify-between pb-4 border-b border-stone-100">
         <h2 className="text-lg font-semibold text-stone-800">
-          {supply ? "Editar Insumo" : "Novo Insumo"}
+          {supply ? "Editar Item" : "Novo Item"}
         </h2>
-        <Button type="button" variant="ghost" size="icon" onClick={onCancel}>
-          <X className="w-4 h-4" />
-        </Button>
       </div>
 
       <div className="grid grid-cols-2 gap-4">
         <div className="col-span-2 space-y-2">
-          <Label htmlFor="name">Nome do Insumo *</Label>
+          <Label htmlFor="name">Nome do Item *</Label>
           <Input
             id="name"
             value={formData.name}
@@ -107,14 +137,11 @@ export default function SupplyForm({ supply, onSubmit, onCancel, isLoading }) {
 
         <div className="space-y-2">
           <Label htmlFor="quantity">Quantidade Atual</Label>
-          <Input
-            id="quantity"
-            type="number"
-            step="0.01"
-            min="0"
-            value={formData.quantity}
-            onChange={(e) => setFormData({ ...formData, quantity: parseFloat(e.target.value) || 0 })}
-          />
+          <div className="flex items-center h-10 px-3 bg-muted rounded-md">
+            <span className="font-semibold text-foreground">
+              {formData.quantity}
+            </span>
+          </div>
         </div>
 
         <div className="space-y-2">
@@ -130,15 +157,21 @@ export default function SupplyForm({ supply, onSubmit, onCancel, isLoading }) {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="costPerUnit">Custo por Unidade (R$)</Label>
-          <Input
-            id="costPerUnit"
-            type="number"
-            step="0.01"
-            min="0"
-            value={formData.costPerUnit}
-            onChange={(e) => setFormData({ ...formData, costPerUnit: parseFloat(e.target.value) || 0 })}
-          />
+          <Label htmlFor="totalCost">Custo Total (R$)</Label>
+          <div className="flex items-center h-10 px-3 bg-muted rounded-md">
+            <span className="font-semibold text-foreground">
+              {formData.totalCost}
+            </span>
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="costPerUnit">Custo Unitário (R$)</Label>
+          <div className="flex items-center h-10 px-3 bg-muted rounded-md">
+            <span className="font-semibold text-foreground">
+              {formData.costPerUnit}
+            </span>
+          </div>
         </div>
 
         <div className="space-y-2">
@@ -157,7 +190,7 @@ export default function SupplyForm({ supply, onSubmit, onCancel, isLoading }) {
             id="notes"
             value={formData.notes}
             onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-            placeholder="Anotações sobre o insumo..."
+            placeholder="Anotações sobre o item..."
             rows={3}
           />
         </div>
@@ -167,14 +200,14 @@ export default function SupplyForm({ supply, onSubmit, onCancel, isLoading }) {
         <Button type="button" variant="outline" onClick={onCancel} className="flex-1">
           Cancelar
         </Button>
-        <Button 
-          type="submit" 
+        <Button
+          type="submit"
           disabled={isLoading}
           className="flex-1 bg-amber-600 hover:bg-amber-700"
         >
           {isLoading ? "Salvando..." : supply ? "Atualizar" : "Cadastrar"}
         </Button>
       </div>
-    </form>
+    </form >
   );
 }

@@ -9,8 +9,7 @@ import { X, Plus, Trash2 } from "lucide-react";
 const sizes = [
   { value: "pequena", label: "Pequena" },
   { value: "media", label: "Média" },
-  { value: "grande", label: "Grande" },
-  { value: "especial", label: "Especial" }
+  { value: "grande", label: "Grande" }
 ];
 
 export default function ProductForm({ product, supplies, onSubmit, onCancel, isLoading }) {
@@ -26,21 +25,21 @@ export default function ProductForm({ product, supplies, onSubmit, onCancel, isL
     imageUrl: product?.imageUrl || ""
   });
 
- const handleSubmit = (e) => {
-  e.preventDefault();
+  const handleSubmit = (e) => {
+    e.preventDefault();
 
-  const payload = {
-    ...formData,
-    recipe: (formData.recipe || [])
-      .filter(r => r.supplyId) // remove linhas vazias
-      .map(r => ({
-        supplyId: Number(r.supplyId),
-        quantity: Number(r.quantity)
-      }))
+    const payload = {
+      ...formData,
+      recipe: (formData.recipe || [])
+        .filter(r => r.supplyId) // remove linhas vazias
+        .map(r => ({
+          supplyId: Number(r.supplyId),
+          quantity: Number(r.quantity)
+        }))
+    };
+
+    onSubmit(payload);
   };
-
-  onSubmit(payload);
-};
 
   const addRecipeItem = () => {
     setFormData(prev => ({
@@ -83,9 +82,6 @@ export default function ProductForm({ product, supplies, onSubmit, onCancel, isL
         <h2 className="text-lg font-semibold text-stone-800">
           {product ? "Editar Produto" : "Novo Produto"}
         </h2>
-        <Button type="button" variant="ghost" size="icon" onClick={onCancel}>
-          <X className="w-4 h-4" />
-        </Button>
       </div>
 
       <div className="grid grid-cols-2 gap-4">
@@ -112,20 +108,20 @@ export default function ProductForm({ product, supplies, onSubmit, onCancel, isL
         </div>
 
         <div className="space-y-2">
-  <Label>Tamanho *</Label>
-  <Select value={formData.size} onValueChange={(value) => setFormData({ ...formData, size: value })}>
-    <SelectTrigger>
-      <SelectValue placeholder="Selecione" />
-    </SelectTrigger>
-    <SelectContent>
-      {sizes.map((size) => (
-        <SelectItem key={size.value} value={size.value}>
-          {size.label}
-        </SelectItem>
-      ))}
-    </SelectContent>
-  </Select>
-  </div>
+          <Label>Tamanho *</Label>
+          <Select value={formData.size} onValueChange={(value) => setFormData({ ...formData, size: value })}>
+            <SelectTrigger>
+              <SelectValue placeholder="Selecione" />
+            </SelectTrigger>
+            <SelectContent>
+              {sizes.map((size) => (
+                <SelectItem key={size.value} value={size.value}>
+                  {size.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
 
 
         <div className="space-y-2">
@@ -178,16 +174,16 @@ export default function ProductForm({ product, supplies, onSubmit, onCancel, isL
       {/* Recipe Section */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <Label>Receita / Insumos Necessários</Label>
+          <Label>Receita / Itens Necessários</Label>
           <Button type="button" variant="outline" size="sm" onClick={addRecipeItem}>
             <Plus className="w-4 h-4 mr-1" />
             Adicionar
           </Button>
         </div>
-        
+
         {formData.recipe.length === 0 ? (
           <p className="text-sm text-stone-400 text-center py-4 bg-stone-50 rounded-lg">
-            Nenhum insumo adicionado à receita
+            Nenhum item adicionado à receita
           </p>
         ) : (
           <div className="space-y-2">
@@ -198,7 +194,7 @@ export default function ProductForm({ product, supplies, onSubmit, onCancel, isL
                   onValueChange={(value) => updateRecipeItem(index, "supplyId", value)}
                 >
                   <SelectTrigger className="flex-1">
-                    <SelectValue placeholder="Selecione o insumo" />
+                    <SelectValue placeholder="Selecione o item" />
                   </SelectTrigger>
                   <SelectContent>
                     {supplies.map((supply) => (
@@ -236,8 +232,8 @@ export default function ProductForm({ product, supplies, onSubmit, onCancel, isL
         <Button type="button" variant="outline" onClick={onCancel} className="flex-1">
           Cancelar
         </Button>
-        <Button 
-          type="submit" 
+        <Button
+          type="submit"
           disabled={isLoading}
           className="flex-1 bg-amber-600 hover:bg-amber-700"
         >

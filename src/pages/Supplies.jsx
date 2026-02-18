@@ -33,7 +33,7 @@ export default function Supplies() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["supplies"] });
       setShowForm(false);
-      toast.success("Insumo cadastrado com sucesso!");
+      toast.success("Item cadastrado com sucesso!");
     }
   });
 
@@ -43,7 +43,7 @@ export default function Supplies() {
       queryClient.invalidateQueries({ queryKey: ["supplies"] });
       setShowForm(false);
       setEditingSupply(null);
-      toast.success("Insumo atualizado!");
+      toast.success("Item atualizado!");
     }
   });
 
@@ -51,14 +51,44 @@ export default function Supplies() {
     mutationFn: (id) => suppliesApi.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["supplies"] });
-      toast.success("Insumo removido!");
+      toast.success("Item removido!");
     }
   });
 
   const movementMutation = useMutation({
     mutationFn: async (data) => {
+      // Calculate weighted average cost for stock entries
+      if (data.type === "entrada" && data.itemType === "item") {
+        // Use String comparison to handle potential Number/String ID mismatches
+        const supply = supplies.find(s => String(s.id) === String(data.itemId));
+        if (supply) {
+          const currentQty = parseFloat(supply.quantity) || 0;
+          const currentCost = parseFloat(supply.costPerUnit) || 0;
+          const entryQty = parseFloat(data.quantity) || 0;
+          const entryCost = parseFloat(data.unitValue) || 0;
+
+          const totalQty = currentQty + entryQty;
+
+          if (totalQty > 0) {
+            // Use existing totalValue if available for better precision, otherwise calculate
+            const currentTotalValue = parseFloat(supply.totalValue) || (currentQty * currentCost);
+            const entryTotalValue = entryQty * entryCost;
+
+            const newTotalValue = currentTotalValue + entryTotalValue;
+            const newCost = newTotalValue / totalQty;
+
+            // Update the supply with the new average cost and total value
+            await suppliesApi.update(supply.id, {
+              ...supply,
+              costPerUnit: newCost,
+              totalValue: newTotalValue
+            });
+          }
+        }
+      }
+
       await movementsApi.create(data);
-      
+
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["supplies"] });
@@ -88,7 +118,7 @@ export default function Supplies() {
   };
 
   const filteredSupplies = (supplies ?? []).filter(s =>
-  (s?.name ?? "").toLowerCase().includes((searchTerm ?? "").toLowerCase())
+    (s?.name ?? "").toLowerCase().includes((searchTerm ?? "").toLowerCase())
   );
 
   // Group by category
@@ -118,12 +148,12 @@ export default function Supplies() {
             <h1 className="text-2xl md:text-3xl font-bold text-stone-800">Insumos</h1>
             <p className="text-stone-500 mt-1">Gerencie seus materiais de produção</p>
           </div>
-          <Button 
+          <Button
             onClick={() => { setEditingSupply(null); setShowForm(true); }}
             className="bg-amber-600 hover:bg-amber-700"
           >
             <Plus className="w-4 h-4 mr-2" />
-            Novo Insumo
+            Novo Item
           </Button>
         </div>
 
@@ -131,7 +161,7 @@ export default function Supplies() {
         <div className="relative max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
           <Input
-            placeholder="Buscar insumos..."
+            placeholder="Buscar itens..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-10 bg-white border-stone-200"
@@ -143,7 +173,7 @@ export default function Supplies() {
           <div className="text-center py-12 text-stone-500">Carregando...</div>
         ) : filteredSupplies.length === 0 ? (
           <div className="text-center py-12 text-stone-500">
-            Nenhum insumo cadastrado. Clique em "Novo Insumo" para começar.
+            Nenhum item cadastrado. Clique em "Novo Item" para começar.
           </div>
         ) : (
           <div className="space-y-8">
@@ -187,7 +217,7 @@ export default function Supplies() {
         <SheetContent className="overflow-y-auto">
           <StockMovementForm
             type={stockModal.type}
-            itemType="insumo"
+            itemType="item"
             item={stockModal.item}
             supplies={supplies}
             products={products}

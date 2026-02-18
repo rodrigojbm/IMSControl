@@ -135,9 +135,8 @@ export default function Movements() {
                     {items.map((movement) => (
                       <Card key={movement.id} className="p-4 border-0 shadow-sm bg-white">
                         <div className="flex items-center gap-4">
-                          <div className={`p-2 rounded-lg ${
-                            movement.type === "entrada" ? "bg-emerald-50" : "bg-rose-50"
-                          }`}>
+                          <div className={`p-2 rounded-lg ${movement.type === "entrada" ? "bg-emerald-50" : "bg-rose-50"
+                            }`}>
                             {movement.type === "entrada" ? (
                               <ArrowDownCircle className="w-5 h-5 text-emerald-600" />
                             ) : (
@@ -150,7 +149,7 @@ export default function Movements() {
                                 {movement.itemName}
                               </h3>
                               <Badge variant="outline" className="text-xs shrink-0">
-                                {movement.itemType === "insumo" ? "Insumo" : "Produto"}
+                                {movement.itemType === "item" ? "Item" : "Produto"}
                               </Badge>
                             </div>
                             <div className="flex items-center gap-3 mt-1 text-sm text-stone-500">

@@ -1,10 +1,10 @@
 import { Link } from "react-router-dom";
 import { createPageUrl } from "./utils";
-import { 
-  LayoutDashboard, 
-  Package, 
-  Boxes, 
-  Factory, 
+import {
+  LayoutDashboard,
+  Package,
+  Boxes,
+  Factory,
   ArrowLeftRight,
   Menu,
   X,
@@ -15,7 +15,7 @@ import { Button } from "@/components/ui/button";
 
 const navItems = [
   { name: "Dashboard", icon: LayoutDashboard, page: "Dashboard" },
-  { name: "Insumos", icon: Package, page: "Supplies" },
+  { name: "Itens", icon: Package, page: "Supplies" },
   { name: "Produtos", icon: Boxes, page: "Products" },
   { name: "Produção", icon: Factory, page: "Production" },
   { name: "Movimentações", icon: ArrowLeftRight, page: "Movements" },
@@ -45,7 +45,7 @@ export default function Layout({ children, currentPageName }) {
 
       {/* Mobile Menu Overlay */}
       {mobileMenuOpen && (
-        <div 
+        <div
           className="lg:hidden fixed inset-0 bg-black/50 z-40"
           onClick={() => setMobileMenuOpen(false)}
         />
@@ -67,8 +67,8 @@ export default function Layout({ children, currentPageName }) {
                 onClick={() => setMobileMenuOpen(false)}
                 className={`
                   flex items-center gap-3 px-4 py-3 rounded-xl transition-all
-                  ${isActive 
-                    ? "bg-amber-50 text-amber-700" 
+                  ${isActive
+                    ? "bg-amber-50 text-amber-700"
                     : "text-stone-600 hover:bg-stone-100"
                   }
                 `}
@@ -104,8 +104,8 @@ export default function Layout({ children, currentPageName }) {
                 to={createPageUrl(item.page)}
                 className={`
                   flex items-center gap-3 px-4 py-3 rounded-xl transition-all
-                  ${isActive 
-                    ? "bg-amber-50 text-amber-700 font-medium" 
+                  ${isActive
+                    ? "bg-amber-50 text-amber-700 font-medium"
                     : "text-stone-600 hover:bg-stone-100"
                   }
                 `}

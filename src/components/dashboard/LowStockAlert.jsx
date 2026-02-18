@@ -12,7 +12,7 @@ export default function LowStockAlert({ items, type }) {
           <AlertTriangle className="w-4 h-4 text-rose-500" />
         </div>
         <h3 className="font-medium text-stone-800">
-          {type === "supply" ? "Insumos em Baixa" : "Produtos em Baixa"}
+          {type === "supply" ? "Estoque em Baixa" : "Produtos em Baixa"}
         </h3>
         <Badge variant="secondary" className="ml-auto bg-rose-50 text-rose-600 hover:bg-rose-50">
           {items.length}

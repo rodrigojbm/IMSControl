@@ -7,15 +7,15 @@ import { Textarea } from "@/components/ui/textarea";
 import { X } from "lucide-react";
 import { format } from "date-fns";
 
-export default function StockMovementForm({ 
-  type = "entrada", 
-  itemType = "insumo", 
-  item, 
-  supplies, 
-  products, 
-  onSubmit, 
-  onCancel, 
-  isLoading 
+export default function StockMovementForm({
+  type = "entrada",
+  itemType = "item",
+  item,
+  supplies,
+  products,
+  onSubmit,
+  onCancel,
+  isLoading
 }) {
   const [formData, setFormData] = useState({
     type,
@@ -47,11 +47,11 @@ export default function StockMovementForm({
   const categories = type === "entrada" ? entryCategories : exitCategories;
 
   const handleItemChange = (itemId) => {
-    const items = formData.itemType === "insumo" ? supplies : products;
+    const items = formData.itemType === "item" ? supplies : products;
     const selectedItem = items.find(i => i.id === itemId);
     if (selectedItem) {
-      const unitValue = formData.itemType === "insumo" 
-        ? selectedItem.cost_per_unit || 0 
+      const unitValue = formData.itemType === "item"
+        ? selectedItem.cost_per_unit || 0
         : (type === "saida" ? selectedItem.sale_price : selectedItem.production_cost) || 0;
       setFormData(prev => ({
         ...prev,
@@ -87,7 +87,7 @@ export default function StockMovementForm({
     onSubmit(formData);
   };
 
-  const items = formData.itemType === "insumo" ? supplies : products;
+  const items = formData.itemType === "item" ? supplies : products;
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
@@ -95,9 +95,6 @@ export default function StockMovementForm({
         <h2 className="text-lg font-semibold text-stone-800">
           {type === "entrada" ? "Entrada de Estoque" : "Saída de Estoque"}
         </h2>
-        <Button type="button" variant="ghost" size="icon" onClick={onCancel}>
-          <X className="w-4 h-4" />
-        </Button>
       </div>
 
       <div className="grid grid-cols-2 gap-4">
@@ -111,7 +108,7 @@ export default function StockMovementForm({
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="insumo">Insumo</SelectItem>
+              <SelectItem value="item">Item</SelectItem>
               <SelectItem value="produto">Produto</SelectItem>
             </SelectContent>
           </Select>
@@ -221,8 +218,8 @@ export default function StockMovementForm({
         <Button type="button" variant="outline" onClick={onCancel} className="flex-1">
           Cancelar
         </Button>
-        <Button 
-          type="submit" 
+        <Button
+          type="submit"
           disabled={isLoading}
           className={`flex-1 ${type === "entrada" ? "bg-emerald-600 hover:bg-emerald-700" : "bg-rose-600 hover:bg-rose-700"}`}
         >

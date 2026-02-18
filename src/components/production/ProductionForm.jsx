@@ -33,7 +33,7 @@ export default function ProductionForm({ product, products, supplies, onSubmit, 
           unit: supply?.unit || item.unit || ""
         };
       });
-      
+
       setFormData(prev => ({
         ...prev,
         productId: selectedProduct.id,
@@ -54,7 +54,7 @@ export default function ProductionForm({ product, products, supplies, onSubmit, 
           unit: item.unit
         };
       });
-      
+
       setInsufficientSupplies(insufficient);
     }
   }, [selectedProduct, formData.quantity, supplies]);
@@ -102,7 +102,7 @@ export default function ProductionForm({ product, products, supplies, onSubmit, 
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    
+
     // Ensure suppliesUsed is properly formatted and productId is a number
     const payload = {
       productId: Number(formData.productId),
@@ -118,7 +118,7 @@ export default function ProductionForm({ product, products, supplies, onSubmit, 
       notes: formData.notes || "",
       totalCost: calculateTotalCost()
     };
-    
+
     onSubmit(payload);
   };
 
@@ -126,9 +126,6 @@ export default function ProductionForm({ product, products, supplies, onSubmit, 
     <form onSubmit={handleSubmit} className="space-y-5">
       <div className="flex items-center justify-between pb-4 border-b border-stone-100">
         <h2 className="text-lg font-semibold text-stone-800">Registrar Produção</h2>
-        <Button type="button" variant="ghost" size="icon" onClick={onCancel}>
-          <X className="w-4 h-4" />
-        </Button>
       </div>
 
       <div className="grid grid-cols-2 gap-4">
@@ -178,14 +175,14 @@ export default function ProductionForm({ product, products, supplies, onSubmit, 
       {/* Supplies to be used */}
       {formData.suppliesUsed.length > 0 && (
         <div className="space-y-3">
-          <Label>Insumos que serão utilizados</Label>
+          <Label>Itens que serão utilizados</Label>
           <div className="bg-stone-50 rounded-lg p-4 space-y-2">
             {formData.suppliesUsed.map((item, index) => {
               const supply = supplies.find(s => s.id === item.supplyId);
               const isInsufficient = supply && supply.quantity < item.quantityUsed;
               return (
-                <div 
-                  key={index} 
+                <div
+                  key={index}
                   className={`flex items-center justify-between py-2 border-b border-stone-200 last:border-0 ${isInsufficient ? 'text-rose-600' : ''}`}
                 >
                   <span className="text-sm">{item.supplyName}</span>
@@ -215,7 +212,7 @@ export default function ProductionForm({ product, products, supplies, onSubmit, 
         <div className="bg-rose-50 border border-rose-200 rounded-lg p-4">
           <div className="flex items-center gap-2 text-rose-600 mb-2">
             <AlertTriangle className="w-4 h-4" />
-            <span className="font-medium text-sm">Insumos insuficientes</span>
+            <span className="font-medium text-sm">Estoque insuficiente</span>
           </div>
           <ul className="text-sm text-rose-600 space-y-1">
             {insufficientSupplies.map((item, i) => (
@@ -242,8 +239,8 @@ export default function ProductionForm({ product, products, supplies, onSubmit, 
         <Button type="button" variant="outline" onClick={onCancel} className="flex-1">
           Cancelar
         </Button>
-        <Button 
-          type="submit" 
+        <Button
+          type="submit"
           disabled={isLoading || insufficientSupplies.length > 0}
           className="flex-1 bg-amber-600 hover:bg-amber-700"
         >

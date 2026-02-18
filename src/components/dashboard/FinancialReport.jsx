@@ -26,9 +26,9 @@ export default function FinancialReport({ movements }) {
       return isAfter(movDate, startDate) || movDate.getTime() === startDate.getTime();
     });
 
-    // Gastos: entradas de insumos (compras)
+    // Gastos: entradas de itens/insumos (compras)
     const expenses = filtered
-      .filter(m => m.type === "entrada" && m.itemType === "insumo" && m.category === "compra")
+      .filter(m => m.type === "entrada" && (m.itemType === "item" || m.itemType === "insumo") && m.category === "compra")
       .reduce((acc, m) => acc + (m.totalValue || 0), 0);
 
     // Receita: saídas de produtos (vendas)

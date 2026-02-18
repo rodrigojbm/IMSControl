@@ -31,6 +31,8 @@ const categoryColors = {
 
 export default function SupplyCard({ supply, onEdit, onDelete, onAddStock, onRemoveStock }) {
   const isLowStock = supply.minQuantity && supply.quantity <= supply.minQuantity;
+  const cost = supply.costPerUnit ?? 0;
+  const totalValue = supply.totalValue ?? 0;
 
   return (
     <Card className="p-4 border-0 shadow-sm bg-white hover:shadow-md transition-shadow">
@@ -71,24 +73,35 @@ export default function SupplyCard({ supply, onEdit, onDelete, onAddStock, onRem
             {supply.quantity}
             <span className="text-sm font-normal text-stone-400 ml-1">{supply.unit}</span>
           </p>
-          {supply.costPerUnit > 0 && (
-            <p className="text-xs text-stone-400 mt-1">
-              R$ {supply.costPerUnit.toFixed(2)}/{supply.unit}
-            </p>
+          {cost > 0 ? (
+            <div className="mt-1">
+              <p className="text-xs text-stone-400 mt-1">
+                R$ {Number(cost).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 6 })}/{supply.unit}
+              </p>
+              <p className="text-xs text-stone-400 mt-1">
+                Total: R$ {Math.round(totalValue).toFixed(2)}
+              </p>
+            </div>
+          ) : (
+            <div className="mt-1">
+              <p className="text-xs text-stone-400 mt-1">
+                Sem custo
+              </p>
+            </div>
           )}
         </div>
         <div className="flex gap-1">
-          <Button 
-            variant="outline" 
-            size="icon" 
+          <Button
+            variant="outline"
+            size="icon"
             className="h-8 w-8"
             onClick={() => onRemoveStock(supply)}
           >
             <Minus className="w-4 h-4" />
           </Button>
-          <Button 
-            variant="outline" 
-            size="icon" 
+          <Button
+            variant="outline"
+            size="icon"
             className="h-8 w-8"
             onClick={() => onAddStock(supply)}
           >
