@@ -79,7 +79,7 @@ export default function SupplyCard({ supply, onEdit, onDelete, onAddStock, onRem
                 R$ {Number(cost).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 6 })}/{supply.unit}
               </p>
               <p className="text-xs text-stone-400 mt-1">
-                Total: R$ {Math.round(totalValue).toFixed(2)}
+                Total: R$ {totalValue.toFixed(2)}
               </p>
             </div>
           ) : (

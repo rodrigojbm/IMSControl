@@ -26,10 +26,12 @@ export default function FinancialReport({ movements }) {
       return isAfter(movDate, startDate) || movDate.getTime() === startDate.getTime();
     });
 
-    // Gastos: entradas de itens/insumos (compras)
-    const expenses = filtered
-      .filter(m => m.type === "entrada" && (m.itemType === "item" || m.itemType === "insumo") && m.category === "compra")
-      .reduce((acc, m) => acc + (m.totalValue || 0), 0);
+    // Gastos: compras (entradas) + perdas (saídas)
+    const expenses = filtered.filter(m => (
+      // compras de itens/insumos
+      m.type === "entrada" && (m.itemType === "item" || m.itemType === "insumo") && m.category === "compra") ||
+      // perdas (saídas)
+      (m.type === "saida" && m.category?.toLowerCase() === "perda")).reduce((acc, m) => acc + (m.totalValue || 0), 0);
 
     // Receita: saídas de produtos (vendas)
     const revenue = filtered
@@ -78,13 +80,13 @@ export default function FinancialReport({ movements }) {
         <div className="p-4 rounded-xl bg-rose-50">
           <div className="flex items-center gap-2 mb-2">
             <TrendingDown className="w-4 h-4 text-rose-500" />
-            <span className="text-sm text-rose-600">Gastos (Compras)</span>
+            <span className="text-sm text-rose-600">Gastos (Compras) / Perdas (Saídas)</span>
           </div>
           <p className="text-2xl font-bold text-rose-700">
             R$ {filteredData.expenses.toFixed(2)}
           </p>
           <p className="text-xs text-rose-500 mt-1">
-            {filteredData.purchaseCount} compras
+            {filteredData.purchaseCount} compras / perdas
           </p>
         </div>
 

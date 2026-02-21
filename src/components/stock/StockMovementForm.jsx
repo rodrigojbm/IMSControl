@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { X } from "lucide-react";
 import { format } from "date-fns";
+import { NumericFormat } from "react-number-format";
 
 export default function StockMovementForm({
   type = "entrada",
@@ -70,15 +71,6 @@ export default function StockMovementForm({
       ...prev,
       quantity,
       totalValue: quantity * prev.unitValue
-    }));
-  };
-
-  const handleUnitValueChange = (value) => {
-    const unitValue = parseFloat(value) || 0;
-    setFormData(prev => ({
-      ...prev,
-      unitValue: unitValue,
-      totalValue: prev.quantity * unitValue
     }));
   };
 
@@ -173,13 +165,27 @@ export default function StockMovementForm({
 
         <div className="space-y-2">
           <Label htmlFor="unitValue">Valor Unitário (R$)</Label>
-          <Input
-            id="unitValue"
-            type="number"
-            step="0.01"
-            min="0"
+          <NumericFormat
             value={formData.unitValue}
-            onChange={(e) => handleUnitValueChange(e.target.value)}
+            thousandSeparator="."
+            decimalSeparator=","
+            prefix="R$ "
+            decimalScale={2}
+            fixedDecimalScale
+            allowNegative={false}
+            customInput={Input}
+            onValueChange={(values) => {
+              const unitValue = values.floatValue ?? 0;
+              setFormData(prev => {
+                const q = prev.quantity ?? 0;
+                const totalValue = q > 0 ? q * unitValue : 0;
+                return {
+                  ...prev,
+                  unitValue,
+                  totalValue,
+                };
+              });
+            }}
           />
         </div>
 
@@ -194,12 +200,29 @@ export default function StockMovementForm({
         </div>
 
         <div className="space-y-2">
-          <Label>Valor Total</Label>
-          <div className="flex items-center h-10 px-3 bg-stone-100 rounded-md">
-            <span className="font-semibold text-amber-600">
-              R$ {formData.totalValue.toFixed(2)}
-            </span>
-          </div>
+          <Label>Valor Total (R$)</Label>
+          <NumericFormat
+            value={formData.totalValue}
+            thousandSeparator="."
+            decimalSeparator=","
+            prefix="R$ "
+            decimalScale={2}
+            fixedDecimalScale
+            allowNegative={false}
+            customInput={Input}
+            onValueChange={(values) => {
+              const totalValue = values.floatValue ?? 0;
+              setFormData(prev => {
+                const q = prev.quantity ?? 0;
+                const unitValue = q > 0 ? totalValue / q : 0;
+                return {
+                  ...prev,
+                  totalValue,
+                  unitValue,
+                };
+              });
+            }}
+          />
         </div>
 
         <div className="col-span-2 space-y-2">
