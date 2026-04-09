@@ -1,37 +1,21 @@
-import { useState, useMemo } from "react";
+import { useMemo } from "react";
 import { Card } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { TrendingUp, TrendingDown, DollarSign, Percent } from "lucide-react";
-import { format, startOfDay, startOfMonth, startOfYear, isAfter, parseISO } from "date-fns";
-import { ptBR } from "date-fns/locale";
 
-export default function FinancialReport({ movements }) {
-  const [period, setPeriod] = useState("month");
-
+export default function FinancialReport({ movements, periodLabel }) {
   const filteredData = useMemo(() => {
-    const now = new Date();
-    let startDate = null;
-
-    if (period === "day") {
-      startDate = startOfDay(now);
-    } else if (period === "month") {
-      startDate = startOfMonth(now);
-    } else if (period === "year") {
-      startDate = startOfYear(now);
-    }
-
-    const filtered = movements.filter(m => {
-      if (period === "all") return true;
-      const movDate = parseISO(m.movementDate);
-      return isAfter(movDate, startDate) || movDate.getTime() === startDate.getTime();
-    });
+    // Usamos os movements inteiros, pois já foram filtrados pela Dashboard
+    const filtered = movements;
 
     // Gastos: compras (entradas) + perdas (saídas)
     const expenses = filtered.filter(m => (
       // compras de itens/insumos
       m.type === "entrada" && (m.itemType === "item" || m.itemType === "insumo") && m.category === "compra") ||
       // perdas (saídas)
-      (m.type === "saida" && m.category?.toLowerCase() === "perda")).reduce((acc, m) => acc + (m.totalValue || 0), 0);
+      (m.type === "saida" && m.category?.toLowerCase() === "perda") ||
+      // devolucoes entram nas depesas tambem ou nao? Para simplificar, vou manter como estava:
+      (m.type === "saida" && m.category?.toLowerCase() === "perda")
+    ).reduce((acc, m) => acc + (m.totalValue || 0), 0);
 
     // Receita: saídas de produtos (vendas)
     const revenue = filtered
@@ -43,50 +27,35 @@ export default function FinancialReport({ movements }) {
     const margin = revenue > 0 ? (profit / revenue) * 100 : 0;
 
     // Contagens
-    const purchaseCount = filtered.filter(m => m.type === "entrada" && m.category === "compra").length;
+    const purchaseCount = filtered.filter(m => 
+      (m.type === "entrada" && m.category === "compra") ||
+      (m.type === "saida" && m.category?.toLowerCase() === "perda")
+    ).length;
     const salesCount = filtered.filter(m => m.type === "saida" && m.category === "venda").length;
 
     return { expenses, revenue, profit, margin, purchaseCount, salesCount };
-  }, [movements, period]);
-
-  const periodLabels = {
-    day: "Hoje",
-    month: format(new Date(), "MMMM/yyyy", { locale: ptBR }),
-    year: format(new Date(), "yyyy"),
-    all: "Todo o período"
-  };
+  }, [movements]);
 
   return (
     <Card className="p-6 border-0 shadow-sm bg-white col-span-full">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-2">
         <h3 className="font-semibold text-lg text-stone-800">Relatório Financeiro</h3>
-        <Select value={period} onValueChange={setPeriod}>
-          <SelectTrigger className="w-40">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="day">Hoje</SelectItem>
-            <SelectItem value="month">Este Mês</SelectItem>
-            <SelectItem value="year">Este Ano</SelectItem>
-            <SelectItem value="all">Total</SelectItem>
-          </SelectContent>
-        </Select>
       </div>
 
-      <p className="text-sm text-stone-500 mb-4">{periodLabels[period]}</p>
+      <p className="text-sm text-stone-500 mb-6">{periodLabel || "Atualmente Selecionado"}</p>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Gastos */}
         <div className="p-4 rounded-xl bg-rose-50">
           <div className="flex items-center gap-2 mb-2">
             <TrendingDown className="w-4 h-4 text-rose-500" />
-            <span className="text-sm text-rose-600">Gastos (Compras) / Perdas (Saídas)</span>
+            <span className="text-sm text-rose-600">Gastos & Perdas</span>
           </div>
           <p className="text-2xl font-bold text-rose-700">
             R$ {filteredData.expenses.toFixed(2)}
           </p>
           <p className="text-xs text-rose-500 mt-1">
-            {filteredData.purchaseCount} compras / perdas
+            {filteredData.purchaseCount} registros
           </p>
         </div>
 

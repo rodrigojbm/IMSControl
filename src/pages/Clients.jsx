@@ -1,16 +1,21 @@
 import { useState, useEffect } from "react";
 import { http } from "../api/http";
 import { UsersRound, Plus, X, Phone, Mail, BuildingIcon, Loader2, Pencil, Trash2, AlertTriangle, FileText } from "lucide-react";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
+import ClientDetailsSheet from "@/components/clients/ClientDetailsSheet";
 
 export default function Clients() {
   const [clients, setClients] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [clientToModify, setClientToModify] = useState(null);
   
-  const [formData, setFormData] = useState({ name: "", email: "", phone: "", document: "", address: "" });
+  const [formData, setFormData] = useState({ name: "", email: "", phone: "", document: "", address: "", notes: "" });
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
 
@@ -33,28 +38,36 @@ export default function Clients() {
   const openCreateModal = () => {
     setIsEditMode(false);
     setClientToModify(null);
-    setFormData({ name: "", email: "", phone: "", document: "", address: "" });
+    setFormData({ name: "", email: "", phone: "", document: "", address: "", notes: "" });
     setError("");
     setIsModalOpen(true);
   };
 
-  const openEditModal = (client) => {
+  const openEditModal = (client, e) => {
+    if (e) e.stopPropagation();
     setIsEditMode(true);
     setClientToModify(client);
     setFormData({ 
-      name: client.name, 
-      email: client.email, 
-      phone: client.phone, 
-      document: client.document, 
-      address: client.address 
+      name: client.name || "", 
+      email: client.email || "", 
+      phone: client.phone || "", 
+      document: client.document || "", 
+      address: client.address || "",
+      notes: client.notes || ""
     });
     setError("");
     setIsModalOpen(true);
   };
 
-  const openDeleteModal = (client) => {
+  const openDeleteModal = (client, e) => {
+    if (e) e.stopPropagation();
     setClientToModify(client);
     setIsDeleteOpen(true);
+  };
+
+  const openDetailsSheet = (client) => {
+    setClientToModify(client);
+    setIsDetailsOpen(true);
   };
 
   const handleSubmit = async (e) => {
@@ -113,63 +126,75 @@ export default function Clients() {
         </button>
       </div>
 
-      {/* Clients List */}
-      <div className="bg-white rounded-2xl shadow-sm border border-stone-200 overflow-hidden">
+      <div className="bg-transparent">
         {loading ? (
-          <div className="p-10 flex justify-center items-center text-stone-400">
+          <div className="p-10 flex justify-center items-center text-stone-400 bg-white rounded-2xl shadow-sm border border-stone-200">
             <Loader2 className="w-8 h-8 animate-spin" />
           </div>
         ) : clients.length === 0 ? (
-          <div className="p-10 text-center text-stone-500">
+          <div className="p-10 text-center text-stone-500 bg-white rounded-2xl shadow-sm border border-stone-200">
             Nenhum cliente cadastrado.
           </div>
         ) : (
-          <div className="divide-y divide-stone-100">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {clients.map((c) => (
-              <div key={c.id} className="p-4 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-stone-50 transition-colors group">
-                <div className="flex items-start sm:items-center gap-4">
-                  <div className="h-12 w-12 rounded-full bg-stone-100 border border-stone-200 flex items-center justify-center flex-shrink-0">
-                    <UsersRound className="w-6 h-6 text-stone-600" />
-                  </div>
+              <Card 
+                key={c.id} 
+                className="border-0 shadow-sm bg-white overflow-hidden flex flex-col hover:shadow-md transition-shadow group cursor-pointer"
+                onClick={() => openDetailsSheet(c)}
+              >
+                <div className="p-5 border-b border-stone-100 flex items-start justify-between">
                   <div>
-                    <h3 className="text-sm font-semibold text-stone-900 flex items-center gap-2">
-                        {c.name}
-                        <span className="text-xs font-mono text-stone-400 bg-stone-100 px-1.5 py-0.5 rounded-md">ID: {c.id}</span>
-                    </h3>
-                    <div className="flex flex-wrap items-center gap-3 mt-1.5 text-xs text-stone-500">
-                      {c.phone && (
-                        <div className="flex items-center gap-1">
-                          <Phone className="w-3.5 h-3.5 text-stone-400" />
-                          <span>{c.phone}</span>
-                        </div>
-                      )}
-                      {c.email && (
-                        <div className="flex items-center gap-1">
-                          <Mail className="w-3.5 h-3.5 text-stone-400" />
-                          <span>{c.email}</span>
-                        </div>
-                      )}
-                    </div>
+                    <h3 className="font-bold text-stone-800 break-words">{c.name}</h3>
+                    <Badge variant="outline" className="text-[10px] mt-1 text-stone-400 bg-stone-50">
+                       ID: {c.id}
+                    </Badge>
+                  </div>
+                  <div className="flex bg-stone-50 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button 
+                        onClick={(e) => openEditModal(c, e)}
+                        className="p-1.5 text-stone-400 hover:text-amber-600 hover:bg-amber-100 rounded-l-lg transition-colors"
+                        title="Editar"
+                      >
+                        <Pencil className="w-3.5 h-3.5" />
+                      </button>
+                      <button 
+                        onClick={(e) => openDeleteModal(c, e)}
+                        className="p-1.5 text-stone-400 hover:text-rose-600 hover:bg-rose-100 rounded-r-lg transition-colors border-l border-stone-200"
+                        title="Remover"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
                   </div>
                 </div>
                 
-                <div className="flex items-center gap-2 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
-                  <button 
-                    onClick={() => openEditModal(c)}
-                    className="p-2 text-stone-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
-                    title="Editar Cliente"
-                  >
-                    <Pencil className="w-4 h-4" />
-                  </button>
-                  <button 
-                    onClick={() => openDeleteModal(c)}
-                    className="p-2 text-stone-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                    title="Remover Cliente"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
+                <div className="p-5 flex-1 space-y-3">
+                  {c.phone && (
+                    <div className="flex flex-col gap-0.5 text-sm">
+                      <span className="text-xs text-stone-400 flex items-center gap-1"><Phone className="w-3 h-3"/> Telefone</span>
+                      <span className="text-stone-700 font-medium">{c.phone}</span>
+                    </div>
+                  )}
+                  {c.email && (
+                    <div className="flex flex-col gap-0.5 text-sm">
+                      <span className="text-xs text-stone-400 flex items-center gap-1"><Mail className="w-3 h-3"/> Email</span>
+                      <span className="text-stone-700 truncate" title={c.email}>{c.email}</span>
+                    </div>
+                  )}
+                  {c.address && (
+                    <div className="flex flex-col gap-0.5 text-sm pt-2 border-t border-stone-50">
+                      <span className="text-xs text-stone-400">Endereço</span>
+                      <span className="text-stone-600 leading-tight">{c.address}</span>
+                    </div>
+                  )}
+                  {c.notes && (
+                    <div className="flex flex-col gap-0.5 text-sm pt-2 border-t border-stone-50">
+                      <span className="text-xs text-stone-400">Observações</span>
+                      <span className="text-stone-600 leading-tight italic">{c.notes}</span>
+                    </div>
+                  )}
                 </div>
-              </div>
+              </Card>
             ))}
           </div>
         )}
@@ -266,6 +291,33 @@ export default function Clients() {
                 </div>
               </div>
 
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium text-stone-700 block">Endereço de Faturamento / Entrega</label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={formData.address}
+                    onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                    className="w-full px-4 py-2.5 rounded-xl border border-stone-200 bg-stone-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all font-medium text-stone-900"
+                    placeholder="Rua, Número, Bairro, Cidade, CEP..."
+                    disabled={submitting}
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium text-stone-700 block">Observações (Interno)</label>
+                <div className="relative">
+                  <textarea
+                    value={formData.notes}
+                    onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                    className="w-full px-4 py-2.5 rounded-xl border border-stone-200 bg-stone-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all font-medium text-stone-900 resize-none h-20"
+                    placeholder="Preferências de horário, detalhes do contrato..."
+                    disabled={submitting}
+                  ></textarea>
+                </div>
+              </div>
+
               {error && (
                 <div className="p-3 bg-red-50 border border-red-100 rounded-xl text-sm text-red-600 flex items-center gap-2">
                   <div className="w-1.5 h-1.5 rounded-full bg-red-600 flex-shrink-0" />
@@ -326,6 +378,14 @@ export default function Clients() {
           </div>
         </div>
       )}
+
+      {/* Client Details Sheet */}
+      <Sheet open={isDetailsOpen} onOpenChange={setIsDetailsOpen}>
+        <SheetContent className="overflow-hidden p-0 sm:max-w-md w-full border-l border-stone-100">
+          <ClientDetailsSheet client={clientToModify} />
+        </SheetContent>
+      </Sheet>
+
     </div>
   );
 }

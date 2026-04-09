@@ -11,7 +11,8 @@ import {
   Flame,
   Users,
   LogOut,
-  UsersRound
+  UsersRound,
+  ShoppingBag
 } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -20,6 +21,7 @@ import { Button } from "@/components/ui/button";
 
 const navItems = [
   { name: "Dashboard", icon: LayoutDashboard, page: "Dashboard" },
+  { name: "Pedidos", icon: ShoppingBag, page: "Orders" },
   { name: "Itens", icon: Package, page: "Supplies" },
   { name: "Produtos", icon: Boxes, page: "Products" },
   { name: "Produção", icon: Factory, page: "Production" },

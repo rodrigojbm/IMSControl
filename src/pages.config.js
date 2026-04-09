@@ -54,6 +54,7 @@ import Production from './pages/Production';
 import Movements from './pages/Movements';
 import Users from './pages/Users';
 import Clients from './pages/Clients';
+import Orders from './pages/Orders';
 import __Layout from './Layout.jsx';
 
 export const PAGES = {
@@ -64,6 +65,7 @@ export const PAGES = {
     "Movements": Movements,
     "Users": Users,
     "Clients": Clients,
+    "Orders": Orders,
 }
 
 export const pagesConfig = {

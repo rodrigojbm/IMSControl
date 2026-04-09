@@ -68,10 +68,15 @@ export default function ProductCard({ product, onEdit, onDelete, onProduce }) {
         <div>
           <p className="text-2xl font-semibold text-stone-800">
             {product.quantity}
-            <span className="text-sm font-normal text-stone-400 ml-1">un</span>
+            <span className="text-sm font-normal text-stone-400 ml-1">un disp.</span>
           </p>
+          {product.reservedQuantity > 0 && (
+             <p className="text-xs text-amber-600 font-medium mt-0.5" title="Reservado em Pedidos">
+               {product.reservedQuantity} un reservadas
+             </p>
+          )}
           {product.salePrice > 0 && (
-            <p className="text-sm text-amber-600 font-medium mt-1">
+            <p className="text-sm text-stone-600 font-medium mt-1.5">
               R$ {product.salePrice.toFixed(2)}
             </p>
           )}
