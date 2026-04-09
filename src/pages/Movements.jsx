@@ -4,19 +4,20 @@ import { suppliesApi, productsApi, movementsApi } from "@/api/apiClient";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowDownCircle, ArrowUpCircle } from "lucide-react";
+import { ArrowDownCircle, ArrowUpCircle, Trash2, FileText } from "lucide-react";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
-import { Trash2 } from "lucide-react";
 import StockMovementForm from "@/components/stock/StockMovementForm";
+import MovementDetails from "@/components/stock/MovementDetails";
 
 export default function Movements() {
   const [showForm, setShowForm] = useState(false);
   const [formType, setFormType] = useState("entrada");
   const [filter, setFilter] = useState("all");
+  const [selectedMovement, setSelectedMovement] = useState(null);
 
   const queryClient = useQueryClient();
 
@@ -37,7 +38,7 @@ export default function Movements() {
 
   const movementMutation = useMutation({
     mutationFn: async (data) => {
-      await movementsApi.create(data);
+      await movementsApi.createBatch(data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["movements"] });
@@ -50,6 +51,7 @@ export default function Movements() {
     mutationFn: (id) => movementsApi.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["movements"] });
+      setSelectedMovement(null);
       toast.success("Registro removido!");
     }
   });
@@ -72,7 +74,7 @@ export default function Movements() {
 
   // Group by date
   const groupedMovements = filteredMovements.reduce((acc, mov) => {
-    const date = mov.movementDate;
+    const date = mov.movementDate ? mov.movementDate.split('T')[0] : "";
     if (!acc[date]) acc[date] = [];
     acc[date].push(mov);
     return acc;
@@ -126,69 +128,95 @@ export default function Movements() {
           <div className="space-y-6">
             {Object.entries(groupedMovements)
               .sort(([a], [b]) => new Date(b) - new Date(a))
-              .map(([date, items]) => (
-                <div key={date}>
-                  <h2 className="text-sm font-medium text-stone-500 mb-3">
-                    {format(new Date(date), "EEEE, d 'de' MMMM", { locale: ptBR })}
-                  </h2>
-                  <div className="space-y-2">
-                    {items.map((movement) => (
-                      <Card key={movement.id} className="p-4 border-0 shadow-sm bg-white">
-                        <div className="flex items-center gap-4">
-                          <div className={`p-2 rounded-lg ${movement.type === "entrada" ? "bg-emerald-50" : "bg-rose-50"
-                            }`}>
-                            {movement.type === "entrada" ? (
-                              <ArrowDownCircle className="w-5 h-5 text-emerald-600" />
-                            ) : (
-                              <ArrowUpCircle className="w-5 h-5 text-rose-500" />
-                            )}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2">
-                              <h3 className="font-medium text-stone-800 truncate">
-                                {movement.itemName}
-                              </h3>
-                              <Badge variant="outline" className="text-xs shrink-0">
-                                {movement.itemType === "item" ? "Item" : "Produto"}
-                              </Badge>
-                            </div>
-                            <div className="flex items-center gap-3 mt-1 text-sm text-stone-500">
-                              <span>{categoryLabels[movement.category]}</span>
-                              <span>•</span>
-                              <span>{movement.quantity} {movement.unit}</span>
-                              {movement.totalValue > 0 && (
-                                <>
-                                  <span>•</span>
-                                  <span>R$ {movement.totalValue.toFixed(2)}</span>
-                                </>
+              .map(([date, items]) => {
+                const isValidDate = !isNaN(new Date(date).getTime());
+                return (
+                  <div key={date}>
+                    <h2 className="text-sm font-medium text-stone-500 mb-3">
+                      {isValidDate ? format(new Date(date + "T12:00:00"), "EEEE, d 'de' MMMM", { locale: ptBR }) : ""}
+                    </h2>
+                    <div className="space-y-3">
+                      {items.map((movement) => (
+                        <Card 
+                          key={movement.id} 
+                          className="p-4 border border-transparent shadow-sm bg-white hover:border-stone-200 cursor-pointer transition-colors"
+                          onClick={() => setSelectedMovement(movement)}
+                        >
+                          <div className="flex items-start gap-4">
+                            <div className={`p-2 rounded-lg mt-1 shrink-0 ${movement.type === "entrada" ? "bg-emerald-50" : "bg-rose-50"
+                              }`}>
+                              {movement.type === "entrada" ? (
+                                <ArrowDownCircle className="w-5 h-5 text-emerald-600" />
+                              ) : (
+                                <ArrowUpCircle className="w-5 h-5 text-rose-500" />
                               )}
                             </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2">
+                                <h3 className="font-medium text-stone-800 truncate">
+                                  {movement.itemName}
+                                </h3>
+                                <Badge variant="outline" className="text-xs shrink-0 bg-stone-50">
+                                  {movement.itemType === "item" ? "Insumo" : "Produto"}
+                                </Badge>
+                              </div>
+                              <div className="flex flex-wrap items-center gap-3 mt-2 text-sm text-stone-600 font-medium">
+                                <span>{categoryLabels[movement.category]}</span>
+                                <span className="text-stone-300">•</span>
+                                <span className={movement.type === "entrada" ? "text-emerald-700" : "text-rose-600"}>
+                                  {movement.type === "entrada" ? "+" : "-"}{movement.quantity} {movement.unit}
+                                </span>
+                                {movement.totalValue > 0 && (
+                                  <>
+                                    <span className="text-stone-300">•</span>
+                                    <span>R$ {movement.totalValue.toFixed(2)}</span>
+                                  </>
+                                )}
+                              </div>
+                              {movement.notes && (
+                                <div className="mt-3 flex items-start gap-2 text-sm text-stone-500 bg-stone-50/50 p-2 rounded-md border border-stone-100">
+                                  <FileText className="w-4 h-4 text-stone-400 shrink-0 mt-0.5" />
+                                  <span className="line-clamp-2">{movement.notes}</span>
+                                </div>
+                              )}
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (confirm("Deseja excluir esta movimentação? Essa ação cancelará efeitos no estoque.")) {
+                                  deleteMutation.mutate(movement.id);
+                                }
+                              }}
+                              className="text-stone-300 hover:text-rose-500 hover:bg-rose-50 shrink-0"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
                           </div>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => {
-                              if (confirm("Deseja excluir esta movimentação?")) {
-                                deleteMutation.mutate(movement.id);
-                              }
-                            }}
-                            className="text-stone-400 hover:text-rose-500 shrink-0"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </Card>
-                    ))}
+                        </Card>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              ))}
+                )
+              })}
           </div>
         )}
       </div>
 
+      {/* Movement Details Sheet */}
+      <Sheet open={!!selectedMovement} onOpenChange={(open) => !open && setSelectedMovement(null)}>
+        <SheetContent className="overflow-y-auto sm:max-w-md">
+          <MovementDetails
+            movement={selectedMovement}
+            onCancel={() => setSelectedMovement(null)}
+          />
+        </SheetContent>
+      </Sheet>
+
       {/* Movement Form Sheet */}
       <Sheet open={showForm} onOpenChange={setShowForm}>
-        <SheetContent className="overflow-y-auto">
+        <SheetContent className="overflow-y-auto sm:max-w-xl">
           <StockMovementForm
             type={formType}
             supplies={supplies}

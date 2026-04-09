@@ -57,38 +57,7 @@ export default function Supplies() {
 
   const movementMutation = useMutation({
     mutationFn: async (data) => {
-      // Calculate weighted average cost for stock entries
-      if (data.type === "entrada" && data.itemType === "item") {
-        // Use String comparison to handle potential Number/String ID mismatches
-        const supply = supplies.find(s => String(s.id) === String(data.itemId));
-        if (supply) {
-          const currentQty = parseFloat(supply.quantity) || 0;
-          const currentCost = parseFloat(supply.costPerUnit) || 0;
-          const entryQty = parseFloat(data.quantity) || 0;
-          const entryCost = parseFloat(data.unitValue) || 0;
-
-          const totalQty = currentQty + entryQty;
-
-          if (totalQty > 0) {
-            // Use existing totalValue if available for better precision, otherwise calculate
-            const currentTotalValue = parseFloat(supply.totalValue) || (currentQty * currentCost);
-            const entryTotalValue = entryQty * entryCost;
-
-            const newTotalValue = currentTotalValue + entryTotalValue;
-            const newCost = newTotalValue / totalQty;
-
-            // Update the supply with the new average cost and total value
-            await suppliesApi.update(supply.id, {
-              ...supply,
-              costPerUnit: newCost,
-              totalValue: newTotalValue
-            });
-          }
-        }
-      }
-
-      await movementsApi.create(data);
-
+      await movementsApi.createBatch(data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["supplies"] });

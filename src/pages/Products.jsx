@@ -93,7 +93,7 @@ export default function Products() {
 
   const stockMutation = useMutation({
     mutationFn: async (data) => {
-      await movementsApi.create(data);
+      await movementsApi.createBatch(data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["products"] });
